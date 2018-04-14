@@ -21,7 +21,6 @@ namespace CloudCompute
     {
         private int _instances;
 
-
         public ConfigData()
         {
             
@@ -355,22 +354,19 @@ namespace CloudCompute
 
         private void MovePacketToHistory(string packetPath)
         {
-            //while (true)
-            //{
-                if (Directory.Exists(_packetsHistoryPath))
+            if (Directory.Exists(_packetsHistoryPath))
+            {
+                try
                 {
-                    try
-                    {
-                        string s = _packetsHistoryPath + '\\' + Path.GetFileName(packetPath);
-                        Directory.Move(packetPath, _packetsHistoryPath + '\\' + Path.GetFileName(packetPath));
-                        return;
-                    }
-                    catch (Exception)
-                    {
-                        Console.WriteLine($"Unable to move executed packet: {Path.GetFileName(packetPath)}");
-                    }
+                    string s = _packetsHistoryPath + '\\' + Path.GetFileName(packetPath);
+                    Directory.Move(packetPath, _packetsHistoryPath + '\\' + Path.GetFileName(packetPath));
+                    return;
                 }
-            //}
+                catch (Exception)
+                {
+                    Console.WriteLine($"Unable to move executed packet: {Path.GetFileName(packetPath)}");
+                }
+            }
         }
 
         private bool CheckIfPacketAlreadyRunned(string packetName)
@@ -406,6 +402,7 @@ namespace CloudCompute
             {
                 Console.WriteLine($"\t\tPacket: {eventArgs.Name} was already runned and placed in \"History\".");
                 Console.WriteLine("\t\t\tRemoving given packet...");
+                // Simulation of time of removal, so we can see the file actually gets created and then deleted
                 Thread.Sleep(1000);
                 RemovePacket(eventArgs.FullPath);
             }
@@ -437,16 +434,6 @@ namespace CloudCompute
                             startContainerIdx = ((startContainerIdx + 1) == 4) ? 0 : startContainerIdx + 1;
                         }
                         MovePacketToHistory(eventArgs.FullPath);
-                        //for (var i = startContainerIdx; i < _numOfContainersToDoCurrentWork; i++)   // OVDE NAMESTITI!!!
-                        //{
-                        //    int port = _containersStartingPort + i * 10;
-                        //    Connect(port);
-                        //    string path = $@"{dllGenericPath.Replace("?", i.ToString())}";
-                        //    Console.WriteLine($"\t\t{Proxy.Load(path)}");
-                        //    //Thread.Sleep(1000);
-                        //}
-                        //MovePacketToHistory(eventArgs.FullPath);
-                        //startContainerIdx = _numOfContainersToDoCurrentWork;
                     }
                     else
                     {
