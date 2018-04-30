@@ -11,14 +11,19 @@ namespace ConsoleApp
     public class ContainerServer
     {
         private ServiceHost _serviceHost;
+        private IContainer _container;
 
-        public ContainerServer()
+        public ContainerServer(IContainer container)
         {
+            _container = container;
         }
 
         public void Start(int port)
         {
-            _serviceHost = new ServiceHost(typeof(Container));
+            _serviceHost = new ServiceHost(_container);
+            var behaviour = _serviceHost.Description.Behaviors.Find<ServiceBehaviorAttribute>();
+            behaviour.InstanceContextMode = InstanceContextMode.Single;
+
             var binding = new NetTcpBinding();
             // This won't allow the connection to timeout
             binding.ReliableSession.Enabled = true;

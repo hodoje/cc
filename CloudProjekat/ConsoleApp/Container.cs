@@ -47,6 +47,7 @@ namespace ConsoleApp
                 string result = "";
                 try
                 {
+                    // If this dll has some dependencies, they won't be loaded.
                     Assembly dll = Assembly.Load(File.ReadAllBytes(assemblyName));
                     if (dll != null)
                     {
@@ -55,7 +56,7 @@ namespace ConsoleApp
                         {
                             System.Reflection.MethodInfo mi = obj.GetType().GetMethod("Start");
 
-                            mi.Invoke(obj, new object[1] { $"{ReturnContainerId(assemblyName)}" });
+                            mi.Invoke(obj, new object[1] { $"{Id}" });
                             result = "Dll executed successfully.";
                         }
                     }
@@ -71,15 +72,6 @@ namespace ConsoleApp
             t.Start();
             t.Wait();
             return t.Result;
-        }
-
-        private static string ReturnContainerId(string assemblyName)
-        {
-            string directoryFullName = Path.GetDirectoryName(assemblyName);
-            string[] pathParts = directoryFullName.Split('\\');
-            string directoryName = pathParts[pathParts.Length - 1];
-            string containerId = directoryName.Replace("Folder", "");
-            return containerId;
         }
     }
 }

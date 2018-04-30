@@ -20,8 +20,7 @@ namespace CloudCompute
         static void Main(string[] args)
         {
             Compute compute = new Compute();
-            compute.Connect(compute.ComputePort);
-
+        
             Console.WriteLine("Compute Service started...");
             Console.WriteLine("Creating workers...");
 

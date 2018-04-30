@@ -21,6 +21,7 @@ namespace CloudCompute
     {
         private int _instances;
 
+
         public ConfigData()
         {
             
@@ -145,21 +146,21 @@ namespace CloudCompute
                 DirectoryInfo rootDirectoryInfo = new DirectoryInfo(rootDirectoryPath);
                 DirectoryInfo[] subDirectories = rootDirectoryInfo.GetDirectories();
 
-            if (subDirectories.Length == 0)
-            {
-                return false;
-            }
-            else
-            {
-                foreach (var subDirectory in subDirectories)
+                if (subDirectories.Length == 0)
                 {
-                    if (subDirectory.Name.Contains("Packet"))
-                    {
-                        return true;
-                    }
+                    return false;
                 }
-                return false;
-            }
+                else
+                {
+                    foreach (var subDirectory in subDirectories)
+                    {
+                        if (subDirectory.Name.Contains("Packet"))
+                        {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
             }
             catch (Exception)
             {
@@ -192,8 +193,6 @@ namespace CloudCompute
             {
                 DirectoryInfo rootDirectoryInfo = new DirectoryInfo(_rootDirectoryPath);
                 DirectoryInfo[] subDirectories = rootDirectoryInfo.GetDirectories(packetName);
-
-                //Thread.Sleep(100);
 
                 string filter = "*.dll";
                 FileInfo[] listOfFiles = subDirectories[0].GetFiles(filter).ToArray();
@@ -239,6 +238,8 @@ namespace CloudCompute
                     // The "Create" event is triggered when the folder is created, not when the files are finished copying
                     string filter = "*.xml";
                     FileInfo[] listOfFiles;
+
+                    // Since there is not event when the file is finished it's creation, we check a few times until we get a valid result
                     while (true)
                     {
                         listOfFiles = subDirectories[0].GetFiles(filter).ToArray();
@@ -276,8 +277,7 @@ namespace CloudCompute
 
         private int ParseConfigFileForNumOfInstances(string path)
         {
-            // Tries to read until it is able to read.
-            // Loops until the file is freed from another process
+            // Tries to read until it is able to read (until it's freed from another process).
             while(true)
             {
                 if (IsFileReady(path))
@@ -296,13 +296,12 @@ namespace CloudCompute
                     }
                     return IsValidValue(value) ? value : -1;
                 }
-                continue;
             }
         }
 
         private bool IsValidValue(int value)
         {
-            return (value > 0 && value <= 4) ? true : false;
+            return (value > 0 && value <= 4);
         }
 
         private string ReturnConfigFileName(FileInfo[] listOfFiles)
@@ -402,7 +401,6 @@ namespace CloudCompute
             {
                 Console.WriteLine($"\t\tPacket: {eventArgs.Name} was already runned and placed in \"History\".");
                 Console.WriteLine("\t\t\tRemoving given packet...");
-                // Simulation of time of removal, so we can see the file actually gets created and then deleted
                 Thread.Sleep(1000);
                 RemovePacket(eventArgs.FullPath);
             }

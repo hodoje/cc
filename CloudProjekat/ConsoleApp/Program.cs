@@ -33,7 +33,7 @@ namespace ConsoleApp
             Console.WriteLine($"Folder path: {container.ContainerDirectoryPath}");
             Console.WriteLine($"Port: {container.Port}");
 
-            ContainerServer containerServer = new ContainerServer();
+            ContainerServer containerServer = new ContainerServer(container);
             containerServer.Start(port);
 
             Console.Read();
