@@ -16,25 +16,6 @@ using Contract;
 
 namespace CloudCompute
 {
-    [Serializable]
-    public class ConfigData
-    {
-        private int _instances;
-
-
-        public ConfigData()
-        {
-            
-        }
-
-        [XmlElement]
-        public int Instances
-        {
-            get { return _instances; }
-            set { _instances = value; }
-        }
-    }
-
     public class Compute
     {
         private IContainer _proxy;
@@ -176,6 +157,7 @@ namespace CloudCompute
             {
                 int cnt = 0;
                 int i = startContainerIdx;
+
                 while (cnt < numOfContainers)
                 {
                     File.Copy(dllSourcePath, $@"{_containersPartialDirectoryPath}{i}\{Path.GetFileName(dllSourcePath)}", true);
@@ -401,6 +383,7 @@ namespace CloudCompute
             {
                 Console.WriteLine($"\t\tPacket: {eventArgs.Name} was already runned and placed in \"History\".");
                 Console.WriteLine("\t\t\tRemoving given packet...");
+                // Simulation of time of removal, so we can see the file actually gets created and then deleted
                 Thread.Sleep(1000);
                 RemovePacket(eventArgs.FullPath);
             }
@@ -421,13 +404,17 @@ namespace CloudCompute
                     {
                         Console.WriteLine($"\t\tPacket: {eventArgs.Name} loaded.");
                         Console.WriteLine($"\t\t\tNumber of instances for work: {_numOfContainersToDoCurrentWork}");
+
                         int cnt = 0;
                         while(cnt < _numOfContainersToDoCurrentWork)
                         {
                             int port = _containersStartingPort + startContainerIdx * 10;
+
                             Connect(port);
+
                             string path = $@"{dllGenericPath.Replace("?", startContainerIdx.ToString())}";
                             Console.WriteLine($"\t\t{Proxy.Load(path)}");
+
                             cnt++;
                             startContainerIdx = ((startContainerIdx + 1) == 4) ? 0 : startContainerIdx + 1;
                         }
