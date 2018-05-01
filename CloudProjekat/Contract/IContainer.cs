@@ -12,5 +12,8 @@ namespace Contract
     {
         [OperationContract]
         string Load(string assemblyName);
+
+        [OperationContract]
+        string CheckState();
     }
 }

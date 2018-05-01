@@ -230,6 +230,7 @@ namespace CloudCompute
                             break;
                         }
                     }
+
                     string configFilename = ReturnConfigFileName(listOfFiles);
                     int numOfInstances = ParseConfigFileForNumOfInstances(configFilename);
                     return numOfInstances;
@@ -273,7 +274,6 @@ namespace CloudCompute
                     int value = 0;
                     foreach (XmlNode node in nodes)
                     {
-                        var a = node;
                         Int32.TryParse(node.InnerText, out value);
                     }
                     return IsValidValue(value) ? value : -1;
@@ -341,7 +341,6 @@ namespace CloudCompute
                 {
                     string s = _packetsHistoryPath + '\\' + Path.GetFileName(packetPath);
                     Directory.Move(packetPath, _packetsHistoryPath + '\\' + Path.GetFileName(packetPath));
-                    return;
                 }
                 catch (Exception)
                 {

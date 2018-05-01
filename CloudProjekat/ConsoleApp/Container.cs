@@ -73,5 +73,10 @@ namespace ConsoleApp
             t.Wait();
             return t.Result;
         }
+
+        public string CheckState()
+        {
+            return $"Container[{Id}] state is OK.";
+        }
     }
 }

@@ -35,7 +35,7 @@ namespace CloudCompute
                 // At the beginning and at the end there are normal double-quotes that make that value a string
                 // And after them there are double double-quotes that will add single double-quotes that are needed to pass a valid string argument
                 // Those double double-quotes will actualy produce \"
-                proc.StartInfo.Arguments = $@"""{compute.ContainersPartialDirectory}{i}"" {port} {i}";                
+                proc.StartInfo.Arguments = $"\"{compute.ContainersPartialDirectory}{i}\" {port} {i}";                
                 proc.Start();
                 compute.DictOfProcesses.Add(i, proc);
             }
