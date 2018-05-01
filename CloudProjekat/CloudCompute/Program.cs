@@ -37,7 +37,9 @@ namespace CloudCompute
                 // Those double double-quotes will actualy produce \"
                 proc.StartInfo.Arguments = $"\"{compute.ContainersPartialDirectory}{i}\" {port} {i}";                
                 proc.Start();
-                compute.DictOfProcesses.Add(i, proc);
+
+                var containerData = new ContainerData(i, port, $"{compute.ContainersPartialDirectory}{i}", "");
+                compute.ContainerDataDictionary.Add(i, containerData);
             }
 
             while (true)

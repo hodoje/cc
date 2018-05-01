@@ -18,8 +18,8 @@ namespace CloudCompute
 {
     public class Compute
     {
-        private IContainer _proxy;
-        private Dictionary<int, Process> _dictOfProcesses;
+        private Dictionary<int,IContainer> _proxyDictionary;
+        private Dictionary<int, ContainerData> _containerDataDictionary;
         private string _rootDirectoryPath;
         private string _containersPartialDirectoryPath;
         private string _containerExe;
@@ -30,15 +30,15 @@ namespace CloudCompute
         private int _numOfContainersToDoCurrentWork;
         private string _packetsHistoryPath;
 
-        public IContainer Proxy
+        public Dictionary<int, IContainer> ProxyDictionary
         {
-            get { return _proxy; }
+            get { return _proxyDictionary; }
         }
 
-        public Dictionary<int, Process> DictOfProcesses
+        public Dictionary<int, ContainerData> ContainerDataDictionary
         {
-            get { return _dictOfProcesses; }
-            set { _dictOfProcesses = value; }
+            get { return _containerDataDictionary; }
+            set { _containerDataDictionary = value; }
         }
 
         public string RootDirectory
@@ -90,7 +90,8 @@ namespace CloudCompute
 
         public Compute()
         {
-            _dictOfProcesses = new Dictionary<int, Process>();
+            _containerDataDictionary = new Dictionary<int, ContainerData>();
+            _proxyDictionary = new Dictionary<int, IContainer>();
             _rootDirectoryPath = $@"{ConfigurationManager.AppSettings["rootDirectoryPath"]}";
             _containersPartialDirectoryPath = $"{ConfigurationManager.AppSettings["containersPartialDirectoryPath"]}";
             _containerExe = $@"{ConfigurationManager.AppSettings["containerExe"]}";
@@ -107,16 +108,28 @@ namespace CloudCompute
 
         public void Connect(int port)
         {
-            var binding = new NetTcpBinding();
-            binding.ReliableSession.Enabled = true;            
-            binding.ReliableSession.InactivityTimeout = TimeSpan.FromHours(1);
-            binding.ReceiveTimeout = TimeSpan.FromHours(1);
-            binding.ReliableSession.Ordered = false;
-            var factory = new ChannelFactory<IContainer>(
-                binding,
-                new EndpointAddress($"net.tcp://localhost:{port}/Container")
-            );
-            _proxy = factory.CreateChannel();
+            var container = _containerDataDictionary.Values.FirstOrDefault(x => x.Port == port);
+            if (container != null)
+            {
+                var binding = new NetTcpBinding();
+                binding.ReliableSession.Enabled = true;
+                binding.ReliableSession.InactivityTimeout = TimeSpan.FromHours(1);
+                binding.ReceiveTimeout = TimeSpan.FromHours(1);
+                binding.ReliableSession.Ordered = false;
+                var factory = new ChannelFactory<IContainer>(
+                    binding,
+                    new EndpointAddress($"net.tcp://localhost:{port}/Container")
+                );
+
+                if (_proxyDictionary.ContainsKey(container.Id))
+                {
+                    _proxyDictionary[container.Id] = factory.CreateChannel();
+                }
+                else
+                {
+                    _proxyDictionary.Add(container.Id, factory.CreateChannel());
+                }
+            }
         }
 
         private bool CheckIfRootDirectoryContainsPackets(string rootDirectoryPath)
@@ -412,7 +425,9 @@ namespace CloudCompute
                             Connect(port);
 
                             string path = $@"{dllGenericPath.Replace("?", startContainerIdx.ToString())}";
-                            Console.WriteLine($"\t\t{Proxy.Load(path)}");
+                            Console.WriteLine($"\t\t{ProxyDictionary[startContainerIdx].Load(path)}");
+
+                            ContainerDataDictionary[startContainerIdx].LastExecutingAssemblyName = path;
 
                             cnt++;
                             startContainerIdx = ((startContainerIdx + 1) == 4) ? 0 : startContainerIdx + 1;
@@ -429,6 +444,18 @@ namespace CloudCompute
                     }
                 }
             }
+        }
+
+        private void ContainerStateWatcher()
+        {
+            Task t = new Task(() =>
+            {
+                while (true)
+                {
+                    
+                }
+            });
+            t.Start();
         }
     }
 }

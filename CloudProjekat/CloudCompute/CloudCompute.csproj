@@ -63,6 +63,7 @@
   <ItemGroup>
     <Compile Include="Compute.cs" />
     <Compile Include="ConfigData.cs" />
+    <Compile Include="ContainerData.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
