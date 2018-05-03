@@ -9,6 +9,7 @@ using System.Runtime.Serialization;
 using System.Xml.Serialization;
 using System.Threading.Tasks;
 using System.ServiceModel;
+using System.ServiceModel.Channels;
 using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
@@ -18,6 +19,7 @@ namespace CloudCompute
 {
     public class Compute
     {
+        private Dictionary<int, bool> _isContainerDllExecutionFinished;
         private Dictionary<int,IContainer> _proxyDictionary;
         private Dictionary<int, ContainerData> _containerDataDictionary;
         private string _rootDirectoryPath;
@@ -88,10 +90,17 @@ namespace CloudCompute
             set { _packetsHistoryPath = value; }
         }
 
+        public Dictionary<int, bool> IsContainerDllExecutionFinished
+        {
+            get { return _isContainerDllExecutionFinished; }
+            set { _isContainerDllExecutionFinished = value; }
+        }
+
         public Compute()
         {
             _containerDataDictionary = new Dictionary<int, ContainerData>();
             _proxyDictionary = new Dictionary<int, IContainer>();
+            _isContainerDllExecutionFinished = new Dictionary<int, bool>();
             _rootDirectoryPath = $@"{ConfigurationManager.AppSettings["rootDirectoryPath"]}";
             _containersPartialDirectoryPath = $"{ConfigurationManager.AppSettings["containersPartialDirectoryPath"]}";
             _containerExe = $@"{ConfigurationManager.AppSettings["containerExe"]}";
@@ -112,10 +121,12 @@ namespace CloudCompute
             if (container != null)
             {
                 var binding = new NetTcpBinding();
-                binding.ReliableSession.Enabled = true;
-                binding.ReliableSession.InactivityTimeout = TimeSpan.FromHours(1);
-                binding.ReceiveTimeout = TimeSpan.FromHours(1);
-                binding.ReliableSession.Ordered = false;
+                // Not enabling ReliableSession enables Force Close of the connection
+                //binding.ReliableSession.Enabled = true;
+                //binding.ReliableSession.InactivityTimeout = TimeSpan.FromHours(1);
+                //binding.ReceiveTimeout = TimeSpan.FromHours(1);
+                //binding.ReliableSession.Ordered = false;
+                
                 var factory = new ChannelFactory<IContainer>(
                     binding,
                     new EndpointAddress($"net.tcp://localhost:{port}/Container")
@@ -411,27 +422,74 @@ namespace CloudCompute
                 }
                 else
                 {
-                    string dllGenericPath = CopyDllToContainerFolder(_numOfContainersToDoCurrentWork, eventArgs.Name);
+                    string dllGenericPath =
+                        CopyDllToContainerFolder(_numOfContainersToDoCurrentWork, eventArgs.Name);
                     if (!string.IsNullOrWhiteSpace(dllGenericPath))
                     {
                         Console.WriteLine($"\t\tPacket: {eventArgs.Name} loaded.");
                         Console.WriteLine($"\t\t\tNumber of instances for work: {_numOfContainersToDoCurrentWork}");
 
                         int cnt = 0;
-                        while(cnt < _numOfContainersToDoCurrentWork)
+                        Dictionary<int, IContainer> tempProxyList = new Dictionary<int, IContainer>();
+                        while (cnt < _numOfContainersToDoCurrentWork)
                         {
-                            int port = _containersStartingPort + startContainerIdx * 10;
+                            if (IsContainerDllExecutionFinished[startContainerIdx] == true)
+                            {
+                                tempProxyList.Add(startContainerIdx, ProxyDictionary[startContainerIdx]);
+                            }
 
-                            Connect(port);
-
-                            string path = $@"{dllGenericPath.Replace("?", startContainerIdx.ToString())}";
-                            Console.WriteLine($"\t\t{ProxyDictionary[startContainerIdx].Load(path)}");
-
-                            ContainerDataDictionary[startContainerIdx].LastExecutingAssemblyName = path;
-
-                            cnt++;
                             startContainerIdx = ((startContainerIdx + 1) == 4) ? 0 : startContainerIdx + 1;
+                            cnt++;
                         }
+
+                        tempProxyList.Values.ToList().ForEach(x =>
+                        {
+                            int idx = -1;
+                            foreach (var keyAndValue in tempProxyList)
+                            {
+                                if (keyAndValue.Value.Equals(x))
+                                {
+                                    idx = keyAndValue.Key;
+                                    break;
+                                }
+                            }
+
+                            string path = $@"{dllGenericPath.Replace("?", idx.ToString())}";
+                            ContainerDataDictionary[idx].LastExecutingAssemblyName = path;
+                            IsContainerDllExecutionFinished[idx] = false;
+
+                            // This task will run in background for each container
+                            Task.Run(() =>
+                            {
+                                // This task will run in the background
+                                Task<string> t = new Task<string>(() =>
+                                {
+                                    try
+                                    {
+                                        return x.Load(path);
+                                    }
+                                    catch (Exception)
+                                    {
+                                        return "";
+                                    }
+                                });
+                                t.Start();
+
+                                // And the outer task will be blocked until "t" is finished
+                                // Thread will be blocked until there is a "Result" returned
+                                string result = t.Result;
+                                Console.WriteLine($"\t\t{result}");
+                                if (String.IsNullOrWhiteSpace(result))
+                                {
+                                    IsContainerDllExecutionFinished[idx] = false;
+                                }
+                                else
+                                {
+                                    IsContainerDllExecutionFinished[idx] = true;
+                                }
+                            });
+                        });
+                        tempProxyList.Clear();
                         MovePacketToHistory(eventArgs.FullPath);
                     }
                     else
@@ -446,16 +504,187 @@ namespace CloudCompute
             }
         }
 
-        private void ContainerStateWatcher()
+        public void ContainerStateWatcher()
         {
-            Task t = new Task(() =>
+            Task.Run(() =>
             {
                 while (true)
                 {
-                    
+                    var proxyDictionaryCopy = new Dictionary<int, IContainer>();
+                    foreach (var p in ProxyDictionary)
+                    {
+                        proxyDictionaryCopy.Add(p.Key, p.Value);
+                    }
+
+                    foreach (var keyAndProxy in proxyDictionaryCopy)
+                    {
+                        try
+                        {
+                            Console.WriteLine(ProxyDictionary[keyAndProxy.Key].CheckState());                            
+                        }
+                        catch (Exception)
+                        {
+                            if(IsContainerDllExecutionFinished.ToList().FindAll(x => x.Value == true).Count > 0)
+                            {
+                                // startContainerIdx is used for the round robin principle
+                                // So, we take te first free container but that is also the logical next one to be used
+                                var containerDllStatus = new KeyValuePair<int, bool>();
+
+                                if (IsContainerDllExecutionFinished.ToList().FindAll(x => x.Value == true).Count > 1)
+                                {
+                                    if (IsContainerDllExecutionFinished[startContainerIdx] == true)
+                                    {
+                                        containerDllStatus =
+                                            IsContainerDllExecutionFinished.First(x => x.Key == startContainerIdx);
+                                    }
+                                    else
+                                    {
+                                        containerDllStatus =
+                                            IsContainerDllExecutionFinished.First(x => x.Value == true);
+                                    }
+                                }
+                                else
+                                {
+                                    containerDllStatus = IsContainerDllExecutionFinished.First(x => x.Value == true);
+                                }
+
+                                Console.WriteLine($"Container[{containerDllStatus.Key}] is free.");
+                                int failedContainerId = keyAndProxy.Key;
+                                int freeContainerId = containerDllStatus.Key;
+                                string dllToExecute = ContainerDataDictionary[failedContainerId].LastExecutingAssemblyName;
+
+                                if (!String.IsNullOrWhiteSpace(dllToExecute))
+                                {
+                                    try
+                                    {
+                                        IsContainerDllExecutionFinished[freeContainerId] = false;
+                                        ContainerDataDictionary[freeContainerId].LastExecutingAssemblyName = dllToExecute;
+                                        Task.Run(() =>
+                                        {
+                                            try
+                                            {
+                                                Console.WriteLine($"\t\t{ProxyDictionary[freeContainerId].Load(dllToExecute)}");
+                                                IsContainerDllExecutionFinished[freeContainerId] = true;
+                                            }
+                                            catch (Exception)
+                                            {
+                                                IsContainerDllExecutionFinished[freeContainerId] = false;
+                                            }
+                                        });
+                                    }
+                                    catch (Exception)
+                                    {
+                                        IsContainerDllExecutionFinished[freeContainerId] = false;
+                                        continue;
+                                    }
+                                }
+
+                                // Place a new container on the failed container's spot, no last dll
+                                ContainerData newContainer = CreateNewContainerFromFailedNoLastDll(failedContainerId);
+                                ContainerDataDictionary[failedContainerId] = newContainer;
+
+                                // Create a new proxy for the container
+                                IContainer newProxy = CreateNewProxyFromOld(newContainer.Port);
+
+                                // Aborting old connection and swaping old proxy for new
+                                ((IChannel)ProxyDictionary[failedContainerId]).Abort();
+                                ProxyDictionary[failedContainerId] = newProxy;
+
+                                // New container is free for dll execution
+                                IsContainerDllExecutionFinished[failedContainerId] = true;
+
+                                var newProcess = CreateNewProcessForNewContainer(newContainer);
+                                newProcess.Start();
+
+                                // We have to manage the round robin counter if we are using it
+                                startContainerIdx = ((startContainerIdx + 1) == 4) ? 0 : startContainerIdx + 1;
+                            }
+                            else
+                            {
+                                int failedContainerId = keyAndProxy.Key;
+                                string dllToExecute = ContainerDataDictionary[failedContainerId].LastExecutingAssemblyName;
+
+                                // Place a new container on the failed container's spot, there is a dll
+                                ContainerData newContainer = CreateNewContainerFromFailedWithLastDll(failedContainerId);
+                                ContainerDataDictionary[failedContainerId] = newContainer;
+
+                                IContainer newProxy = CreateNewProxyFromOld(newContainer.Port);
+                                ((IChannel)ProxyDictionary[failedContainerId]).Abort();
+                                ProxyDictionary[failedContainerId] = newProxy;
+
+                                var newProcess = CreateNewProcessForNewContainer(newContainer);
+                                newProcess.Start();
+
+                                if (!String.IsNullOrWhiteSpace(dllToExecute))
+                                {
+                                    try
+                                    {
+                                        IsContainerDllExecutionFinished[newContainer.Id] = false;
+                                        ContainerDataDictionary[newContainer.Id].LastExecutingAssemblyName = dllToExecute;
+                                        Task.Run(() =>
+                                        {
+                                            try
+                                            {
+                                                Console.WriteLine($"Executing a dll on the new container[{newContainer.Id}].");
+                                                Console.WriteLine($"\t\t{ProxyDictionary[newContainer.Id].Load(dllToExecute)}");
+                                                IsContainerDllExecutionFinished[newContainer.Id] = true;
+                                            }
+                                            catch (Exception)
+                                            {
+                                                IsContainerDllExecutionFinished[newContainer.Id] = false;
+                                            }
+                                        });
+                                    }
+                                    catch (Exception)
+                                    {
+                                        IsContainerDllExecutionFinished[newContainer.Id] = false;
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    proxyDictionaryCopy.Clear();
+                    Thread.Sleep(3000);
                 }
             });
-            t.Start();
+        }
+
+        private ContainerData CreateNewContainerFromFailedNoLastDll(int failedContainerId)
+        {
+            ContainerData newContainer = new ContainerData(failedContainerId,
+                ContainerDataDictionary[failedContainerId].Port,
+                $"{ContainersPartialDirectory}{failedContainerId}", "");
+            return newContainer;
+        }
+
+        private ContainerData CreateNewContainerFromFailedWithLastDll(int failedContainerId)
+        {
+            ContainerData newContainer = new ContainerData(failedContainerId,
+                ContainerDataDictionary[failedContainerId].Port,
+                $"{ContainersPartialDirectory}{failedContainerId}", ContainerDataDictionary[failedContainerId].LastExecutingAssemblyName);
+            return newContainer;
+        }
+
+        private IContainer CreateNewProxyFromOld(int newContainerPort)
+        {
+            IContainer newProxy;
+            var binding = new NetTcpBinding();
+            var factory = new ChannelFactory<IContainer>(
+                binding,
+                new EndpointAddress($"net.tcp://localhost:{newContainerPort}/Container")
+            );
+            newProxy = factory.CreateChannel();
+            return newProxy;
+        }
+
+        private Process CreateNewProcessForNewContainer(ContainerData newContainer)
+        {
+            var newProcess = new Process();
+            newProcess.StartInfo.FileName = ContainerExe;
+            newProcess.StartInfo.Arguments =
+                $"\"{ContainersPartialDirectory}{newContainer.Id}\" {newContainer.Port} {newContainer.Id}";
+            return newProcess;
         }
     }
 }

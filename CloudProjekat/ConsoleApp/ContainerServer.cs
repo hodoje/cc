@@ -25,20 +25,21 @@ namespace ConsoleApp
             behaviour.InstanceContextMode = InstanceContextMode.Single;
 
             var binding = new NetTcpBinding();
+            // Not enabling ReliableSession enables Force Close of the connection
             // This won't allow the connection to timeout
-            binding.ReliableSession.Enabled = true;
+            //binding.ReliableSession.Enabled = true;
             // The first inactivity timer is on the reliable session and is called the InactivityTimeout.
             // This inactivity timer fires if no messages, either application or infrastructure, are received within the timeout period.
             // An infrastructure message is a message that is generated for the purpose of one of the protocols in the channel stack, 
             // such as a keep alive or an acknowledgment, rather than containing application data.
-            binding.ReliableSession.InactivityTimeout = TimeSpan.FromHours(1);
+            //binding.ReliableSession.InactivityTimeout = TimeSpan.FromHours(1);
             // The second inactivity timer is on the service and uses the ReceiveTimeout setting of the binding.
             // This inactivity timer fires if no application messages are received within the timeout period. 
             // This specifies, for example, the maximum time a client may take to send at least one message to the server before the server 
             // will close the channel used by a session.
             // This behavior ensures that clients cannot hold on to server resources for arbitrary long periods.
-            binding.ReceiveTimeout = TimeSpan.FromHours(1);
-            binding.ReliableSession.Ordered = false;
+            //binding.ReceiveTimeout = TimeSpan.FromHours(1);
+            //binding.ReliableSession.Ordered = false;
             _serviceHost.AddServiceEndpoint(
                 typeof(IContainer), 
                 binding,

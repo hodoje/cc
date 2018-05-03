@@ -31,20 +31,28 @@ namespace CloudCompute
                 proc.StartInfo.FileName = compute.ContainerExe;
                 // If we were to execute the ConsoleApp.exe in CMD with a string argument, we would need to do it like this:
                 // ConsoleApp.exe "C:\Users\Nikola Karaklic\Documents\Visual Studio 2017\Projects\CloudProjekat\ConsoleApp\Folder"
-                // An argument that is a string neeeds to be in double-quotes when passed, that's why we have these triple double-quotes
-                // At the beginning and at the end there are normal double-quotes that make that value a string
-                // And after them there are double double-quotes that will add single double-quotes that are needed to pass a valid string argument
-                // Those double double-quotes will actualy produce \"
+                // An argument that is a string neeeds to be in double-quotes when passed, that's why we have these double-quotes
                 proc.StartInfo.Arguments = $"\"{compute.ContainersPartialDirectory}{i}\" {port} {i}";                
                 proc.Start();
 
                 var containerData = new ContainerData(i, port, $"{compute.ContainersPartialDirectory}{i}", "");
+
+                // Save container data
                 compute.ContainerDataDictionary.Add(i, containerData);
-            }
+
+                // Set up container to be free for work
+                compute.IsContainerDllExecutionFinished.Add(i, true);
+                
+                // Connect to each container proxy
+                compute.Connect(containerData.Port);
+            }            
+
+            // Start the container state watcher
+            compute.ContainerStateWatcher();
 
             while (true)
             {
-                Console.WriteLine("Checking designated location...");
+                //Console.WriteLine("Checking designated location...");
                 Thread.Sleep(3000);
             }
         }

@@ -4,9 +4,18 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading.Tasks;
 using Contract;
+using System.Linq;
+using System.ServiceModel;
+using System.Threading;
 
 namespace ConsoleApp
 {
+    // With ConcurrencyMode.Multiple, threads can call an operation at any time.  
+    // It is your responsibility to guard your state with locks. If
+    // you always guarantee you leave state consistent when you leave
+    // the lock, you can assume it is valid when you enter the lock.
+    //[CallbackBehavior(UseSynchronizationContext = false)]
+    [ServiceBehavior(ConcurrencyMode = ConcurrencyMode.Multiple)]
     public class Container : IContainer
     {
         private string _containerDirectoryPath;
@@ -58,6 +67,16 @@ namespace ConsoleApp
 
                             mi.Invoke(obj, new object[1] { $"{Id}" });
                             result = "Dll executed successfully.";
+                            Task tt = Task.Run(() =>
+                            {
+                                for (int i = 0; i < 10; i++)
+                                {
+                                    Console.WriteLine($"Start{i}");
+                                    Thread.Sleep(2000);
+                                }
+                                Console.WriteLine("Finished.");
+                            });
+                            tt.Wait();
                         }
                     }
                     dll = null;
