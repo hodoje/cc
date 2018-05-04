@@ -26,7 +26,7 @@ and run it, by running the *Start* method from interface *IWorkerRole* given in 
 step 3.
 - Each container has its on WCF server with method *Load* given in the listing 2. After reading the .dll, its being ran 
 and checking out, returning back an information about the execution of the .dll (was it ok or if there was an error).
-- NOTE: All WCF servers are ran on localhost address, but on different ports. For simplicity of the solution, it is
+- **NOTE:** All WCF servers are ran on localhost address, but on different ports. For simplicity of the solution, it is
 allowed to use predefined ports. Example of ports interval is: 10010 - 10050.
 
 Project stage B and C translation:
