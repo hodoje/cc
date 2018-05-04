@@ -22,6 +22,8 @@ namespace CloudCompute
         private Dictionary<int, bool> _isContainerDllExecutionFinished;
         private Dictionary<int,IContainer> _proxyDictionary;
         private Dictionary<int, ContainerData> _containerDataDictionary;
+        private bool _areContainersExecuting;
+        private int _startingContainerIdx;
         private string _rootDirectoryPath;
         private string _containersPartialDirectoryPath;
         private string _containerExe;
@@ -96,11 +98,24 @@ namespace CloudCompute
             set { _isContainerDllExecutionFinished = value; }
         }
 
+        public bool AreContainersExecuting
+        {
+            get { return _areContainersExecuting; }
+            set { _areContainersExecuting = value; }
+        }
+
+        public int StartingContainerIdx
+        {
+            get { return _startingContainerIdx; }
+            set { _startingContainerIdx = value; }
+        }
         public Compute()
         {
             _containerDataDictionary = new Dictionary<int, ContainerData>();
             _proxyDictionary = new Dictionary<int, IContainer>();
             _isContainerDllExecutionFinished = new Dictionary<int, bool>();
+            _areContainersExecuting = false;
+            _startingContainerIdx = 0;
             _rootDirectoryPath = $@"{ConfigurationManager.AppSettings["rootDirectoryPath"]}";
             _containersPartialDirectoryPath = $"{ConfigurationManager.AppSettings["containersPartialDirectoryPath"]}";
             _containerExe = $@"{ConfigurationManager.AppSettings["containerExe"]}";
@@ -180,7 +195,7 @@ namespace CloudCompute
             if (!String.IsNullOrWhiteSpace(dllSourcePath))
             {
                 int cnt = 0;
-                int i = startContainerIdx;
+                int i = StartingContainerIdx;
 
                 while (cnt < numOfContainers)
                 {
@@ -327,10 +342,12 @@ namespace CloudCompute
         // Other
         private void WatchRootDirectory(string directoryPath)
         {
-            _watcher = new FileSystemWatcher(directoryPath);
-            _watcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.DirectoryName;
-            _watcher.IncludeSubdirectories = false;
-            _watcher.Filter = "*.*";
+            _watcher = new FileSystemWatcher(directoryPath)
+            {
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.DirectoryName,
+                IncludeSubdirectories = false,
+                Filter = "*.*"
+            };
             _watcher.Created += new FileSystemEventHandler(OnNewPacketCreation);
             _watcher.EnableRaisingEvents = true;
         }
@@ -398,7 +415,6 @@ namespace CloudCompute
             }
         }
 
-        private int startContainerIdx = 0;
         private void OnNewPacketCreation(object sender, FileSystemEventArgs eventArgs)
         {
             _numOfContainersToDoCurrentWork = ReturnNumberOfContainersForWork(eventArgs.Name);
@@ -426,71 +442,87 @@ namespace CloudCompute
                         CopyDllToContainerFolder(_numOfContainersToDoCurrentWork, eventArgs.Name);
                     if (!string.IsNullOrWhiteSpace(dllGenericPath))
                     {
-                        Console.WriteLine($"\t\tPacket: {eventArgs.Name} loaded.");
-                        Console.WriteLine($"\t\t\tNumber of instances for work: {_numOfContainersToDoCurrentWork}");
-
-                        int cnt = 0;
-                        Dictionary<int, IContainer> tempProxyList = new Dictionary<int, IContainer>();
-                        while (cnt < _numOfContainersToDoCurrentWork)
+                        if(AreContainersExecuting)
+                        //if (IsContainerDllExecutionFinished.ToList().FindAll(x => x.Value == false).Count > 0)
                         {
-                            if (IsContainerDllExecutionFinished[startContainerIdx] == true)
-                            {
-                                tempProxyList.Add(startContainerIdx, ProxyDictionary[startContainerIdx]);
-                            }
-
-                            startContainerIdx = ((startContainerIdx + 1) == 4) ? 0 : startContainerIdx + 1;
-                            cnt++;
+                            Console.WriteLine("\t\tContainers are busy. Try again later.");
+                            Console.WriteLine("\t\t\tRemoving given packet...");
+                            // Simulation of time of removal, so we can see the file actually gets created and then deleted
+                            Thread.Sleep(1000);
+                            RemovePacket(eventArgs.FullPath);
                         }
-
-                        tempProxyList.Values.ToList().ForEach(x =>
+                        else
                         {
-                            int idx = -1;
-                            foreach (var keyAndValue in tempProxyList)
+                            Console.WriteLine($"\t\tPacket: {eventArgs.Name} loaded.");
+                            Console.WriteLine($"\t\t\tNumber of instances for work: {_numOfContainersToDoCurrentWork}");
+                            AreContainersExecuting = true;
+
+                            int cnt = 0;
+                            Dictionary<int, IContainer> tempProxyList = new Dictionary<int, IContainer>();
+                            while (cnt < _numOfContainersToDoCurrentWork)
                             {
-                                if (keyAndValue.Value.Equals(x))
+                                if (IsContainerDllExecutionFinished[StartingContainerIdx] == true)
                                 {
-                                    idx = keyAndValue.Key;
-                                    break;
+                                    tempProxyList.Add(StartingContainerIdx, ProxyDictionary[StartingContainerIdx]);
                                 }
+
+                                StartingContainerIdx = ((StartingContainerIdx + 1) == 4) ? 0 : StartingContainerIdx + 1;
+                                cnt++;
                             }
 
-                            string path = $@"{dllGenericPath.Replace("?", idx.ToString())}";
-                            ContainerDataDictionary[idx].LastExecutingAssemblyName = path;
-                            IsContainerDllExecutionFinished[idx] = false;
-
-                            // This task will run in background for each container
-                            Task.Run(() =>
+                            List<Task> taskArr = new List<Task>();
+                            tempProxyList.Values.ToList().ForEach(proxy =>
                             {
-                                // This task will run in the background
-                                Task<string> t = new Task<string>(() =>
+                                int idx = -1;
+                                foreach (var keyAndValue in tempProxyList)
                                 {
-                                    try
+                                    if (keyAndValue.Value.Equals(proxy))
                                     {
-                                        return x.Load(path);
+                                        idx = keyAndValue.Key;
+                                        break;
                                     }
-                                    catch (Exception)
+                                }
+
+                                string path = $@"{dllGenericPath.Replace("?", idx.ToString())}";
+                                ContainerDataDictionary[idx].LastExecutingAssemblyName = path;
+                                IsContainerDllExecutionFinished[idx] = false;
+
+                                // This task will run in background for each container
+                                Task t = Task.Run(() =>
+                                {
+                                    // This task will run in the background
+                                    Task<string> tt = new Task<string>(() =>
                                     {
-                                        return "";
+                                        try
+                                        {
+                                            return proxy.Load(path);
+                                        }
+                                        catch (Exception)
+                                        {
+                                            return "";
+                                        }
+                                    });
+                                    tt.Start();
+
+                                    // And the outer task will be blocked until "t" is finished
+                                    // Thread will be blocked until there is a "Result" returned
+                                    string result = tt.Result;
+                                    Console.WriteLine($"\t\t{result}");
+                                    if (String.IsNullOrWhiteSpace(result))
+                                    {
+                                        IsContainerDllExecutionFinished[idx] = false;
+                                    }
+                                    else
+                                    {
+                                        IsContainerDllExecutionFinished[idx] = true;
                                     }
                                 });
-                                t.Start();
-
-                                // And the outer task will be blocked until "t" is finished
-                                // Thread will be blocked until there is a "Result" returned
-                                string result = t.Result;
-                                Console.WriteLine($"\t\t{result}");
-                                if (String.IsNullOrWhiteSpace(result))
-                                {
-                                    IsContainerDllExecutionFinished[idx] = false;
-                                }
-                                else
-                                {
-                                    IsContainerDllExecutionFinished[idx] = true;
-                                }
+                                taskArr.Add(t);
                             });
-                        });
-                        tempProxyList.Clear();
-                        MovePacketToHistory(eventArgs.FullPath);
+                            Task.WaitAll(taskArr.ToArray());
+                            tempProxyList.Clear();
+                            MovePacketToHistory(eventArgs.FullPath);
+                        }
                     }
                     else
                     {
@@ -527,15 +559,15 @@ namespace CloudCompute
                             if(IsContainerDllExecutionFinished.ToList().FindAll(x => x.Value == true).Count > 0)
                             {
                                 // startContainerIdx is used for the round robin principle
-                                // So, we take te first free container but that is also the logical next one to be used
+                                // So, we take te first free container but that is also has to be the logically next one to be used
                                 var containerDllStatus = new KeyValuePair<int, bool>();
 
                                 if (IsContainerDllExecutionFinished.ToList().FindAll(x => x.Value == true).Count > 1)
                                 {
-                                    if (IsContainerDllExecutionFinished[startContainerIdx] == true)
+                                    if (IsContainerDllExecutionFinished[StartingContainerIdx] == true)
                                     {
                                         containerDllStatus =
-                                            IsContainerDllExecutionFinished.First(x => x.Key == startContainerIdx);
+                                            IsContainerDllExecutionFinished.First(x => x.Key == StartingContainerIdx);
                                     }
                                     else
                                     {
@@ -597,7 +629,7 @@ namespace CloudCompute
                                 newProcess.Start();
 
                                 // We have to manage the round robin counter if we are using it
-                                startContainerIdx = ((startContainerIdx + 1) == 4) ? 0 : startContainerIdx + 1;
+                                StartingContainerIdx = ((StartingContainerIdx + 1) == 4) ? 0 : StartingContainerIdx + 1;
                             }
                             else
                             {

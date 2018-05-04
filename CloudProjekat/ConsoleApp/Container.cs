@@ -76,7 +76,6 @@ namespace ConsoleApp
                                 }
                                 Console.WriteLine("Finished.");
                             });
-                            tt.Wait();
                         }
                     }
                     dll = null;
