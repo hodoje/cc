@@ -35,10 +35,10 @@ namespace CloudCompute
                 proc.StartInfo.Arguments = $"\"{compute.ContainersPartialDirectory}{i}\" {port} {i}";                
                 proc.Start();
 
-                var containerData = new ContainerData(i, port, $"{compute.ContainersPartialDirectory}{i}", "");
+                var containerData = new ContainerData(i, port, $"{compute.ContainersPartialDirectory}{i}", null, null);
 
                 // Save container data
-                compute.ContainerDataDictionary.Add(i, containerData);
+                compute.RoleEnvironment.RoleInstances.Add(i, containerData);
 
                 // Set up container to be free for work
                 compute.IsContainerDllExecutionFinished.Add(i, true);
@@ -49,6 +49,9 @@ namespace CloudCompute
 
             // Start the container state watcher
             compute.ContainerStateWatcher();
+
+            RoleEnvironmentServer roleEnvironmentServer = new RoleEnvironmentServer(compute.RoleEnvironment);
+            roleEnvironmentServer.Start();
 
             while (true)
             {

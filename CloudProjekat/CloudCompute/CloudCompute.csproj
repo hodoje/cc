@@ -66,6 +66,8 @@
     <Compile Include="ContainerData.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RoleEnvironment.cs" />
+    <Compile Include="RoleEnvironmentServer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">
