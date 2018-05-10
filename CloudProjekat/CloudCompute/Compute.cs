@@ -734,7 +734,6 @@ namespace CloudCompute
                     IsContainerDllExecutionFinished.First(x => x.Key == rightContainerId.Value.Id);
             }
 
-            Console.WriteLine($"Container[{containerDllStatus.Key}] is free.");
             int failedContainerId = keyAndProxy.Key;
             // Failed instance now has no currently executing assemblies
             RoleEnvironment.RoleInstances[failedContainerId].CurrentlyExecutingAssemblyName = null;
