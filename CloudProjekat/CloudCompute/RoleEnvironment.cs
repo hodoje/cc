@@ -40,6 +40,8 @@ namespace CloudCompute
                 if (containers.Find(x => x.Id == id) != null)
                 {
                     ContainerData rightContainer = containers.Find(x => x.Id == id);
+                    // ovde treba da ide neka nova adresa koja ce biti razlicita od svih ostalih kako bi se na njoj podigao worker servis
+                    // return $"{IPAddress.Loopback}:{rightContainer.Port + 200}";
                     return $"{IPAddress.Loopback}:{rightContainer.Port}";
                 }
                 else

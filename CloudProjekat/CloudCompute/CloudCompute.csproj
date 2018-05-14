@@ -64,10 +64,13 @@
     <Compile Include="Compute.cs" />
     <Compile Include="ConfigData.cs" />
     <Compile Include="ContainerData.cs" />
+    <Compile Include="DllWork.cs" />
+    <Compile Include="FileWork.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RoleEnvironment.cs" />
     <Compile Include="RoleEnvironmentServer.cs" />
+    <Compile Include="XmlWork.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">

@@ -25,11 +25,9 @@ namespace Dll
             string binDir = Path.GetDirectoryName(debugDir);
             string consoleAppPath = Path.GetDirectoryName(binDir);
             string myAssemblyDirectory = Path.GetFullPath(consoleAppPath + $@"\Folder{_executingContainerId}");
-            Thread.Sleep(5000);
             string myAssemblyName = Directory.GetFiles(myAssemblyDirectory).First(x => x.Contains(".dll"));
             _ipAddress = ReturnAddress(myAssemblyName, containerId);
             Console.WriteLine(_ipAddress);
-            Thread.Sleep(5000);
             string[] brotherPorts = ReturnBrotherInstancesAddresses(myAssemblyName, _ipAddress);
             foreach (var brotherPort in brotherPorts)
             {

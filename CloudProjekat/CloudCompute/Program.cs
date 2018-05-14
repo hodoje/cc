@@ -39,9 +39,6 @@ namespace CloudCompute
 
                 // Save container data
                 compute.RoleEnvironment.RoleInstances.Add(i, containerData);
-
-                // Set up container to be free for work
-                compute.IsContainerDllExecutionFinished.Add(i, true);
                 
                 // Connect to each container proxy
                 compute.Connect(containerData.Port);

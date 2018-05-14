@@ -13,6 +13,7 @@ namespace CloudCompute
         private string _containerRootDirectory;
         private string _currentlyExecutingAssemblyName;
         private string _lastExecutedAssemblyName;
+        private bool _isOnline;
 
         public ContainerData(int id, int port, string containerRootDirectory, string currentlyExecutingAssemblyName, string lastExecutedAssemblyName)
         {
@@ -21,6 +22,7 @@ namespace CloudCompute
             _containerRootDirectory = containerRootDirectory;
             _currentlyExecutingAssemblyName = currentlyExecutingAssemblyName;
             _lastExecutedAssemblyName = lastExecutedAssemblyName;
+            _isOnline = true;
         }
 
         public int Id { get => _id; set => _id = value; }
@@ -28,5 +30,6 @@ namespace CloudCompute
         public string ContainerRootDirectory { get => _containerRootDirectory; set => _containerRootDirectory = value; }
         public string LastExecutingAssemblyName { get => _lastExecutedAssemblyName; set => _lastExecutedAssemblyName = value; }
         public string CurrentlyExecutingAssemblyName { get => _currentlyExecutingAssemblyName; set => _currentlyExecutingAssemblyName = value; }
+        public bool IsOnline { get => _isOnline; set => _isOnline = value; }
     }
 }
