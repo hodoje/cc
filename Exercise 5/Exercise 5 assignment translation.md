@@ -29,6 +29,7 @@ Same logic is used for *Bank* service, only difference is that methods from *IBa
 - *Rollback()* - if there is an entity *userID* + "prep" in the table, it is deleted.
 
 When running the *Bank* and *Bookstore* worker roles the following data should be stored in an Azure table (a same table for two different types of entities can be used):
+
 *Bookstore:*
 - *BookID*
 - *Book state on the stock*
