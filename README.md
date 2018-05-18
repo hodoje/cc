@@ -5,6 +5,7 @@
   - Compute's app.config is assigned with keys for which value is an absolute path!
   - The logic is that at one time only a single dll can be executed.
   - This gives us a history of only one dll.
+  - Exercise 5 files are in the "Exercise 5" folder.
   
 Project stage A translation (originally it's written on Serbian Latin):
 
@@ -42,3 +43,13 @@ In accordance with the scheme (picture 1), implement a Cloud compute service:
 3. Provide a functionality for *ComputeService* that it can offer information to instances about their brother instances via WCF server, in the following way:
 - *ComputeService* contains a WCF server with interface in listing 3. When a client programs are loaded inside of containers, they ask for their address from Compute service using the method *GetAddress*.
 - *ComputeService* internally maintains where which service resides. It implements a method from listing 3, *BrotherInstances* in a way that, on a basis of the name of the program and name of the instance itself uniquely identified with it's own address (it's recommended to use only the port as a unique identifier), it finds the rest of the ports reserved for other instances and returns a list of ports as an aswer. 
+
+Project stage D and E:
+
+In accordance with the scheme (picture 1), implement a Cloud compute service:
+
+4. Provide *RoleEnvironment* class via client library.
+- For assignment done under c), it's necessary to implement the functionality within a class *RoleEnvironment* given in listing 1. Class should come in a separate library so it could be distributed to users of PaaS environment.
+- *Note*: for simplicity of the assignment, client applications will not have more than one WCF server.
+
+5. Migrate a task from Exercises 5 from Microsoft Azure platform to the platform implemented under a, b, c and d. Transactions do not have to implement durability attribute.
