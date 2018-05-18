@@ -56,26 +56,35 @@ namespace ConsoleApp
                 string result = "";
                 try
                 {
-                    // If this dll has some dependencies, they won't be loaded.
-                    Assembly dll = Assembly.Load(File.ReadAllBytes(assemblyName));
+                    Assembly dll = Assembly.LoadFile(assemblyName);
                     if (dll != null)
                     {
-                        object obj = dll.CreateInstance("Dll.Worker");
-                        if (obj != null)
+                        Type workerClass = dll.ExportedTypes.ToList().Find(x => x.Name == "Worker");
+                        Type iWorkerInterface = dll.ExportedTypes.ToList().Find(x => x.Name == "IWorker");
+                        if(workerClass.GetInterfaces().Contains(iWorkerInterface))
                         {
-                            System.Reflection.MethodInfo mi = obj.GetType().GetMethod("Start");
-
-                            mi.Invoke(obj, new object[1] { $"{Id}" });
-                            result = "Dll executed successfully.";
-                            Task tt = Task.Run(() =>
+                            string typeName = dll.ExportedTypes.ToList().Find(x => x.Name == "Worker").FullName;
+                            object obj = dll.CreateInstance(typeName);
+                            if (obj != null)
                             {
-                                for (int i = 0; i < 10; i++)
+                                System.Reflection.MethodInfo mi = obj.GetType().GetMethod("Start");
+
+                                mi.Invoke(obj, new object[1] { $"{Id}" });
+                                result = "Dll executed successfully.";
+                                Task tt = Task.Run(() =>
                                 {
-                                    Console.WriteLine($"Start{i}");
-                                    Thread.Sleep(2000);
-                                }
-                                Console.WriteLine("Finished.");
-                            });
+                                    for (int i = 0; i < 10; i++)
+                                    {
+                                        Console.WriteLine($"Start{i}");
+                                        Thread.Sleep(2000);
+                                    }
+                                    Console.WriteLine("Finished.");
+                                });
+                            }
+                        }
+                        else
+                        {
+                            result = "Dll has no IWorker interface and a class that implements it.";
                         }
                     }
                     dll = null;

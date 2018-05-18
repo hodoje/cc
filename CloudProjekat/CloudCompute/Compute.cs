@@ -270,7 +270,6 @@ namespace CloudCompute
                     if (!string.IsNullOrWhiteSpace(dllGenericPath))
                     {
                         if(AreContainersExecuting)
-                        //if (IsContainerDllExecutionFinished.ToList().FindAll(x => x.Value == false).Count > 0)
                         {
                             Console.WriteLine("\t\tContainers are busy. Try again later.");
                             Console.WriteLine("\t\t\tRemoving given packet...");
@@ -289,7 +288,6 @@ namespace CloudCompute
                             while (cnt < NumOfContainersToDoCurrentWork)
                             {
                                 if(RoleEnvironment.RoleInstances[StartingContainerIdx].CurrentlyExecutingAssemblyName == null)
-                                //if (IsContainerDllExecutionFinished[StartingContainerIdx] == true)
                                 {
                                     tempProxyList.Add(StartingContainerIdx, ProxyDictionary[StartingContainerIdx]);
                                 }
@@ -342,16 +340,11 @@ namespace CloudCompute
                                     }
                                     else
                                     {
-                                        //RoleEnvironment.RoleInstances[idx].CurrentlyExecutingAssemblyName = dllPath;
-                                        //RoleEnvironment.RoleInstances[idx].CurrentlyExecutingAssemblyName = null;
-                                        //IsContainerDllExecutionFinished[idx] = true;
-
                                     }
                                     RoleEnvironment.RoleInstances[idx].LastExecutingAssemblyName = dllPath;
                                 });
                                 taskArr.Add(t);
                             });
-                            //Task.WaitAll(taskArr.ToArray());
                             tempProxyList.Clear();
                             MovePacketToHistory(eventArgs.FullPath);
                         }
@@ -509,11 +502,7 @@ namespace CloudCompute
                         }
                         else
                         {
-                            //RoleEnvironment.RoleInstances[freeContainerId].CurrentlyExecutingAssemblyName = dllToExecute;
-                            //RoleEnvironment.RoleInstances[freeContainerId].CurrentlyExecutingAssemblyName = null;
-                            //IsContainerDllExecutionFinished[freeContainerId] = true;
-                        }
-                        //RoleEnvironment.RoleInstances[freeContainerId].CurrentlyExecutingAssemblyName = null;                        
+                        }                   
                         RoleEnvironment.RoleInstances[freeContainerId].LastExecutingAssemblyName = dllToExecute;
                     });
                 }
@@ -521,7 +510,6 @@ namespace CloudCompute
                 {
                     RoleEnvironment.RoleInstances[freeContainerId].CurrentlyExecutingAssemblyName = null;
                     RoleEnvironment.RoleInstances[freeContainerId].IsOnline = false;
-                    //continue;
                 }
             }
 
@@ -593,11 +581,7 @@ namespace CloudCompute
                         }
                         else
                         {
-                            //RoleEnvironment.RoleInstances[newContainer.Id].CurrentlyExecutingAssemblyName = dllToExecute;
-                            //RoleEnvironment.RoleInstances[newContainer.Id].CurrentlyExecutingAssemblyName = null;
-                            //IsContainerDllExecutionFinished[newContainer.Id] = true;
-                        }
-                        //RoleEnvironment.RoleInstances[freeContainerId].CurrentlyExecutingAssemblyName = null;                        
+                        }                   
                         RoleEnvironment.RoleInstances[newContainer.Id].LastExecutingAssemblyName = dllToExecute;
                     });
                 }
@@ -605,7 +589,6 @@ namespace CloudCompute
                 {
                     RoleEnvironment.RoleInstances[newContainer.Id].CurrentlyExecutingAssemblyName = null;
                     RoleEnvironment.RoleInstances[newContainer.Id].IsOnline = false;
-                    //continue;
                 }
             }
         }
