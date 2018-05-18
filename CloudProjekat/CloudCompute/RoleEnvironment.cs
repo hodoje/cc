@@ -13,8 +13,8 @@ namespace CloudCompute
     [ServiceBehavior(ConcurrencyMode = ConcurrencyMode.Multiple)]
     public class RoleEnvironment : IRoleEnvironment
     {
+        private static int newClientAppPortStep = 200;
         private Dictionary<int, ContainerData> _roleInstances;
-
         public Dictionary<int, ContainerData> RoleInstances { get => _roleInstances; set => _roleInstances = value; }
 
         public RoleEnvironment()
@@ -41,8 +41,9 @@ namespace CloudCompute
                 {
                     ContainerData rightContainer = containers.Find(x => x.Id == id);
                     // ovde treba da ide neka nova adresa koja ce biti razlicita od svih ostalih kako bi se na njoj podigao worker servis
-                    // return $"{IPAddress.Loopback}:{rightContainer.Port + 200}";
-                    return $"{IPAddress.Loopback}:{rightContainer.Port}";
+                    int clientAppPort = rightContainer.Port + newClientAppPortStep;
+                    return $"{IPAddress.Loopback}:{clientAppPort}";
+                    //return $"{IPAddress.Loopback}:{rightContainer.Port}";
                 }
                 else
                 {
@@ -65,7 +66,8 @@ namespace CloudCompute
                 foreach (var inst in RoleInstances)
                 {
                     string instAssemblyFileName = Path.GetFileName(inst.Value.CurrentlyExecutingAssemblyName);
-                    if (inst.Value.Port.ToString() != myAddress.Split(':')[1] && instAssemblyFileName == myAssemblyFileName)
+                    string instPort = $"{inst.Value.Port + newClientAppPortStep}"; 
+                    if (instPort != myAddress.Split(':')[1] && instAssemblyFileName == myAssemblyFileName)
                     {
                         portArr.Add(inst.Value.Port.ToString());
                     }

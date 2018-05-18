@@ -67,5 +67,13 @@ namespace CloudCompute
             }
             return result;
         }
+        
+        public void CopyDllToContainerFolder(string source, string destination)
+        {
+            if (!File.Exists(source))
+            {
+                File.Copy(source, destination);
+            }
+        }
     }
 }

@@ -11,10 +11,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp", "ConsoleApp\Co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contract", "Contract\Contract.csproj", "{FC60C982-8EBC-4062-8BF0-673C75E1D6E6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoleEnvironmentDll", "RoleEnvironmentDll\RoleEnvironmentDll.csproj", "{F8CE544E-7DE6-4061-901C-04E5F5006530}"
+EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -36,11 +35,18 @@ Global
 		{FC60C982-8EBC-4062-8BF0-673C75E1D6E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FC60C982-8EBC-4062-8BF0-673C75E1D6E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FC60C982-8EBC-4062-8BF0-673C75E1D6E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8CE544E-7DE6-4061-901C-04E5F5006530}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8CE544E-7DE6-4061-901C-04E5F5006530}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8CE544E-7DE6-4061-901C-04E5F5006530}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8CE544E-7DE6-4061-901C-04E5F5006530}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3E812C88-CC6E-4DEC-B08A-9F488F95B5FD}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal

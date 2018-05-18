@@ -89,7 +89,7 @@ namespace ConsoleApp
                     }
                     dll = null;
                 }
-                catch (Exception ex)
+                catch (TargetInvocationException ex)
                 {
                     Console.WriteLine(ex.Message);
                     //result = $"Dll not executed properly on container: Container{_id}";

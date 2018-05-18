@@ -468,7 +468,8 @@ namespace CloudCompute
             // Failed instance now has no currently executing assemblies
             RoleEnvironment.RoleInstances[failedContainerId].CurrentlyExecutingAssemblyName = null;
             int freeContainerId = containerDllStatusId;
-            string dllToExecute = RoleEnvironment.RoleInstances[failedContainerId].LastExecutingAssemblyName;
+            string lastExecutedDll = RoleEnvironment.RoleInstances[failedContainerId].LastExecutingAssemblyName;
+            string dllToExecute = lastExecutedDll.Replace($"Folder{failedContainerId}", $"Folder{freeContainerId}");
 
             if (!String.IsNullOrWhiteSpace(dllToExecute))
             {
@@ -482,6 +483,7 @@ namespace CloudCompute
                             try
                             {
                                 RoleEnvironment.RoleInstances[freeContainerId].CurrentlyExecutingAssemblyName = dllToExecute;
+                                DllParser.CopyDllToContainerFolder(lastExecutedDll, dllToExecute);
                                 return ProxyDictionary[freeContainerId].Load(dllToExecute);
                             }
                             catch (Exception)
@@ -536,7 +538,7 @@ namespace CloudCompute
             int failedContainerId = keyAndProxy.Key;
             // Failed container now has no executing assemblies
             RoleEnvironment.RoleInstances[failedContainerId].CurrentlyExecutingAssemblyName = null;
-            String dllToExecute = RoleEnvironment.RoleInstances[failedContainerId].LastExecutingAssemblyName;
+            string dllToExecute = RoleEnvironment.RoleInstances[failedContainerId].LastExecutingAssemblyName;
 
             // Place a new container on the failed container's spot, there is a dll
             ContainerData newContainer = CreateNewContainerFromFailedWithLastDll(failedContainerId);
