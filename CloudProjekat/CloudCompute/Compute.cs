@@ -373,17 +373,18 @@ namespace CloudCompute
                         proxyDictionaryCopy.Add(p.Key, p.Value);
                     }
 
-                    foreach (var keyAndProxy in proxyDictionaryCopy)
+                    proxyDictionaryCopy.ToList().ForEach(keyAndProxy =>
                     {
                         try
                         {
-                            Console.WriteLine(ProxyDictionary[keyAndProxy.Key].CheckState());                            
+                            Console.WriteLine(ProxyDictionary[keyAndProxy.Key].CheckState());
                         }
                         catch (Exception)
                         {
                             // Set failed container "IsOnline" status to false immediately
                             RoleEnvironment.RoleInstances[keyAndProxy.Key].IsOnline = false;
-                            if(RoleEnvironment.RoleInstances.ToList().FindAll(x => x.Value.IsOnline == true).Count > 0)
+                            //if (RoleEnvironment.RoleInstances.ToList().FindAll(x => x.Value.IsOnline == true).Count > 0)
+                            if(RoleEnvironment.RoleInstances.ToList().FindAll(x => x.Value.CurrentlyExecutingAssemblyName == null).Count > 0)
                             {
                                 HandleIfThereAreFreeContainers(keyAndProxy);
                             }
@@ -392,7 +393,28 @@ namespace CloudCompute
                                 HandleIFNoFreeContainers(keyAndProxy);
                             }
                         }
-                    }
+
+                    });
+                    //foreach (var keyAndProxy in proxyDictionaryCopy)
+                    //{
+                    //    try
+                    //    {
+                    //        Console.WriteLine(ProxyDictionary[keyAndProxy.Key].CheckState());                            
+                    //    }
+                    //    catch (Exception)
+                    //    {
+                    //        // Set failed container "IsOnline" status to false immediately
+                    //        RoleEnvironment.RoleInstances[keyAndProxy.Key].IsOnline = false;
+                    //        if(RoleEnvironment.RoleInstances.ToList().FindAll(x => x.Value.IsOnline == true).Count > 0)
+                    //        {
+                    //            HandleIfThereAreFreeContainers(keyAndProxy);
+                    //        }
+                    //        else
+                    //        {
+                    //            HandleIFNoFreeContainers(keyAndProxy);
+                    //        }
+                    //    }
+                    //}
                     proxyDictionaryCopy.Clear();
                     Thread.Sleep(3000);
                 }
@@ -488,6 +510,8 @@ namespace CloudCompute
                             }
                             catch (Exception)
                             {
+                                RoleEnvironment.RoleInstances[freeContainerId].LastExecutingAssemblyName = dllToExecute;
+                                RoleEnvironment.RoleInstances[freeContainerId].CurrentlyExecutingAssemblyName = null;
                                 RoleEnvironment.RoleInstances[freeContainerId].IsOnline = false;
                                 return null;
                             }
@@ -510,6 +534,7 @@ namespace CloudCompute
                 }
                 catch (Exception)
                 {
+                    RoleEnvironment.RoleInstances[freeContainerId].LastExecutingAssemblyName = dllToExecute;
                     RoleEnvironment.RoleInstances[freeContainerId].CurrentlyExecutingAssemblyName = null;
                     RoleEnvironment.RoleInstances[freeContainerId].IsOnline = false;
                 }
@@ -567,6 +592,8 @@ namespace CloudCompute
                             }
                             catch (Exception)
                             {
+                                RoleEnvironment.RoleInstances[newContainer.Id].CurrentlyExecutingAssemblyName = null;
+                                RoleEnvironment.RoleInstances[newContainer.Id].LastExecutingAssemblyName = dllToExecute;
                                 RoleEnvironment.RoleInstances[newContainer.Id].IsOnline = false;
                                 return null;
                             }
@@ -589,6 +616,7 @@ namespace CloudCompute
                 }
                 catch (Exception)
                 {
+                    RoleEnvironment.RoleInstances[newContainer.Id].LastExecutingAssemblyName = dllToExecute;
                     RoleEnvironment.RoleInstances[newContainer.Id].CurrentlyExecutingAssemblyName = null;
                     RoleEnvironment.RoleInstances[newContainer.Id].IsOnline = false;
                 }
