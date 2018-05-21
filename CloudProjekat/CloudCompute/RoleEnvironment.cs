@@ -58,7 +58,7 @@ namespace CloudCompute
 
         public string[] BrotherInstances(string myAssemblyName, string myAddress)
         {
-            List<string> portArr = new List<string>();
+            List<string> portList = new List<string>();
             string myAssemblyFileName = Path.GetFileName(myAssemblyName);
 
             if (RoleInstances.ToList().FindAll(x => Path.GetFileName(x.Value.CurrentlyExecutingAssemblyName) == myAssemblyFileName).Count > 1)
@@ -69,11 +69,11 @@ namespace CloudCompute
                     string instPort = $"{inst.Value.Port + newClientAppPortStep}"; 
                     if (instPort != myAddress.Split(':')[1] && instAssemblyFileName == myAssemblyFileName)
                     {
-                        portArr.Add(inst.Value.Port.ToString());
+                        portList.Add(inst.Value.Port.ToString());
                     }
                 }
             }
-            return portArr.ToArray();
+            return portList.ToArray();
         }
     }
 }

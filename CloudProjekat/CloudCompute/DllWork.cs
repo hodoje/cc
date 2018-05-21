@@ -13,24 +13,30 @@ namespace CloudCompute
 
         public string CopyDllToContainerFolder(int numOfContainers, string packetName, int startingContainerIdx, string rootDirectoryPath, string containersPartialDirectoryPath)
         {
-            string dllSourcePath = ReturnDllSourcePath(packetName, rootDirectoryPath);
-            if (!String.IsNullOrWhiteSpace(dllSourcePath))
+            string executingDllSourcePath;
+            FileInfo[] allDlls = ReturnAllDlls(packetName, rootDirectoryPath, out executingDllSourcePath);
+
+            if (!String.IsNullOrWhiteSpace(executingDllSourcePath))
             {
                 int cnt = 0;
                 int i = startingContainerIdx;
 
                 while (cnt < numOfContainers)
                 {
-                    File.Copy(dllSourcePath, $@"{containersPartialDirectoryPath}{i}\{Path.GetFileName(dllSourcePath)}", true);
+                    foreach (FileInfo dll in allDlls)
+                    {
+                        File.Copy(dll.FullName, $@"{containersPartialDirectoryPath}{i}\{Path.GetFileName(dll.Name)}", true);
+                        //File.Copy(dllSourcePath, $@"{containersPartialDirectoryPath}{i}\{Path.GetFileName(dllSourcePath)}", true);
+                    }
                     cnt++;
                     i = ((i + 1) == 4) ? 0 : i + 1;
                 }
-                return $@"{containersPartialDirectoryPath}?\{Path.GetFileName(dllSourcePath)}";
+                return $@"{containersPartialDirectoryPath}?\{Path.GetFileName(executingDllSourcePath)}";
             }
             return "";
         }
 
-        public FileInfo[] CheckIsValidNumberOfDlls(string packetName, string rootDirectoryPath)
+        public FileInfo[] ReturnDlls(string packetName, string rootDirectoryPath)
         {
             if (CheckIfRootDirectoryContainsPackets(rootDirectoryPath))
             {
@@ -39,27 +45,24 @@ namespace CloudCompute
 
                 string filter = "*.dll";
                 FileInfo[] listOfFiles = subDirectories[0].GetFiles(filter).ToArray();
-                if (listOfFiles.Length > 1)
-                {
-                    return listOfFiles;
-                }
                 return listOfFiles;
             }
             return null;
         }
 
-        public string ReturnDllSourcePath(string packetName, string rootDirectoryPath)
+        public FileInfo[] ReturnAllDlls(string packetName, string rootDirectoryPath, out string executingDllFileName)
         {
-            FileInfo[] listOfFiles = CheckIsValidNumberOfDlls(packetName, rootDirectoryPath);
-            return (listOfFiles.Length > 1) ? "" : ReturnDllFileName(listOfFiles);
+            FileInfo[] listOfFiles = ReturnDlls(packetName, rootDirectoryPath);
+            executingDllFileName = (listOfFiles.Length > 4) ? "" : ReturnExecutingDllFileName(listOfFiles);
+            return listOfFiles;
         }
 
-        public string ReturnDllFileName(FileInfo[] listOfFiles)
+        public string ReturnExecutingDllFileName(FileInfo[] listOfFiles)
         {
             string result = "";
             foreach (FileInfo file in listOfFiles)
             {
-                if (file.Name.Split('.')[1] == "dll")
+                if (file.Name == "Dll.dll")
                 {
                     result = file.FullName;
                     break;
