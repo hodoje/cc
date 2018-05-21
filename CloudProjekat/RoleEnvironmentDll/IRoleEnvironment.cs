@@ -5,7 +5,7 @@ using System.ServiceModel;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Dll
+namespace RoleEnvironmentDll
 {
     [ServiceContract]
     public interface IRoleEnvironment

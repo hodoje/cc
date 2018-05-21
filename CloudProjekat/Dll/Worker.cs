@@ -14,21 +14,27 @@ namespace Dll
     {
         private string _executingContainerId;
         private string _ipAddress;
+        private string _myAssemblyName;
+        private Assembly _roleEnvironmentDll;
+
+        public string ExecutingContainerId { get => _executingContainerId; set => _executingContainerId = value; }
+        public string IpAddress { get => _ipAddress; set => _ipAddress = value; }
+        public string MyAssemblyName { get => _myAssemblyName; set => _myAssemblyName = value; }
+        public Assembly RoleEnvironmentDll { get => _roleEnvironmentDll; set => _roleEnvironmentDll = value; }
 
         public void Start(string containerId)
         {
-            _executingContainerId = containerId;
-            Console.WriteLine($"Test{containerId}");
+            ExecutingContainerId = containerId;
+            Console.WriteLine($"Test{ExecutingContainerId}");
 
-            string executingExe = Assembly.GetCallingAssembly().Location;
-            string debugDir = Path.GetDirectoryName(executingExe);
-            string binDir = Path.GetDirectoryName(debugDir);
-            string consoleAppPath = Path.GetDirectoryName(binDir);
-            string myAssemblyDirectory = Path.GetFullPath(consoleAppPath + $@"\Folder{_executingContainerId}");
-            string myAssemblyName = Directory.GetFiles(myAssemblyDirectory).First(x => x.Contains(".dll"));
-            _ipAddress = ReturnAddress(myAssemblyName, containerId);
-            Console.WriteLine(_ipAddress);
-            string[] brotherPorts = ReturnBrotherInstancesAddresses(myAssemblyName, _ipAddress);
+            MyAssemblyName = GetAssemblyName();
+
+            RoleEnvironmentDll = Assembly.LoadFile(MyAssemblyName);
+
+            IpAddress = ReturnAddress(MyAssemblyName, ExecutingContainerId);
+            Console.WriteLine(IpAddress);
+
+            string[] brotherPorts = ReturnBrotherInstancesAddresses(MyAssemblyName, IpAddress);
             foreach (var brotherPort in brotherPorts)
             {
                 Console.WriteLine(brotherPort);
@@ -40,22 +46,97 @@ namespace Dll
             Console.WriteLine("Stop");
         }
 
-        private string ReturnAddress(string myAssemblyName, string containerId)
+        public string GetAssemblyName()
         {
-            var binding = new NetTcpBinding();
-            var endpoint = new EndpointAddress(new Uri($"net.tcp://localhost:50000/RoleEnvironment"));
-            var factory = new ChannelFactory<IRoleEnvironment>(binding);
-            var proxy = factory.CreateChannel(endpoint);
-            return proxy.GetAddress(myAssemblyName, containerId);
+            string executingExe = Assembly.GetCallingAssembly().Location;
+            string debugDir = Path.GetDirectoryName(executingExe);
+            string binDir = Path.GetDirectoryName(debugDir);
+            string consoleAppPath = Path.GetDirectoryName(binDir);
+            string myAssemblyDirectory = Path.GetFullPath(consoleAppPath + $@"\Folder{ExecutingContainerId}");
+            string assemblyName = Directory.GetFiles(myAssemblyDirectory).First(x => x.Contains("RoleEnvironmentDll.dll"));
+            return assemblyName;
         }
 
-        private string[] ReturnBrotherInstancesAddresses(string myAssemblyName, string containerId)
+        private string ReturnAddress(string myAssemblyName, string containerId)
         {
-            var binding = new NetTcpBinding();
-            var endpoint = new EndpointAddress(new Uri($"net.tcp://localhost:50000/RoleEnvironment"));
-            var factory = new ChannelFactory<IRoleEnvironment>(binding);
-            var proxy = factory.CreateChannel(endpoint);
-            return proxy.BrotherInstances(myAssemblyName, containerId);
+            Task<string> t = new Task<string>(() =>
+            {
+                string result = "";
+                try
+                {
+                    if (RoleEnvironmentDll != null)
+                    {
+                        Type workerClass = RoleEnvironmentDll.ExportedTypes.ToList().Find(x => x.Name == "RoleEnvironment");
+                        Type iWorkerInterface = RoleEnvironmentDll.ExportedTypes.ToList().Find(x => x.Name == "IRoleEnvironment");
+                        if (workerClass.GetInterfaces().Contains(iWorkerInterface))
+                        {
+                            string typeName = RoleEnvironmentDll.ExportedTypes.ToList().Find(x => x.Name == "RoleEnvironment").FullName;
+                            object obj = RoleEnvironmentDll.CreateInstance(typeName);
+                            if (obj != null)
+                            {
+                                System.Reflection.MethodInfo mi = obj.GetType().GetMethod("ReturnAddress");
+
+                                result = (string)(mi.Invoke(obj, new object[2] { $"{myAssemblyName}", containerId }));
+                            }
+                        }
+                        else
+                        {
+                            result = "Dll has no IRoleEnvironment interface and a class that implements it.";
+                        }
+                    }
+                    RoleEnvironmentDll = null;
+                }
+                catch (TargetInvocationException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    result = null;
+                }
+                return result;
+            });
+            t.Start();
+            t.Wait();
+            return t.Result;
+        }
+
+        private string[] ReturnBrotherInstancesAddresses(string myAssemblyName, string myAddress)
+        {
+            Task<string[]> t = new Task<string[]>(() =>
+            {
+                string[] result = { };
+                try
+                {
+                    if (RoleEnvironmentDll != null)
+                    {
+                        Type workerClass = RoleEnvironmentDll.ExportedTypes.ToList().Find(x => x.Name == "RoleEnvironment");
+                        Type iWorkerInterface = RoleEnvironmentDll.ExportedTypes.ToList().Find(x => x.Name == "IRoleEnvironment");
+                        if (workerClass.GetInterfaces().Contains(iWorkerInterface))
+                        {
+                            string typeName = RoleEnvironmentDll.ExportedTypes.ToList().Find(x => x.Name == "RoleEnvironment").FullName;
+                            object obj = RoleEnvironmentDll.CreateInstance(typeName);
+                            if (obj != null)
+                            {
+                                System.Reflection.MethodInfo mi = obj.GetType().GetMethod("ReturnBrotherInstancesAddresses");
+
+                                result = (string[])(mi.Invoke(obj, new object[2] { $"{myAssemblyName}", myAddress.Split(':')[1] }));
+                            }
+                        }
+                        else
+                        {
+                            result = null;
+                        }
+                    }
+                    RoleEnvironmentDll = null;
+                }
+                catch (TargetInvocationException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    result = null;
+                }
+                return result;
+            });
+            t.Start();
+            t.Wait();
+            return t.Result;
         }
     }
 }
