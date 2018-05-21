@@ -324,6 +324,8 @@ namespace CloudCompute
                                         }
                                         catch (Exception)
                                         {
+                                            RoleEnvironment.RoleInstances[idx].LastExecutingAssemblyName = dllPath;
+                                            RoleEnvironment.RoleInstances[idx].CurrentlyExecutingAssemblyName = null;
                                             RoleEnvironment.RoleInstances[idx].IsOnline = false;
                                             return null;
                                         }
@@ -342,6 +344,7 @@ namespace CloudCompute
                                     {
                                     }
                                     RoleEnvironment.RoleInstances[idx].LastExecutingAssemblyName = dllPath;
+                                    RoleEnvironment.RoleInstances[idx].CurrentlyExecutingAssemblyName = null; //
                                 });
                                 taskArr.Add(t);
                             });
@@ -373,7 +376,29 @@ namespace CloudCompute
                         proxyDictionaryCopy.Add(p.Key, p.Value);
                     }
 
-                    proxyDictionaryCopy.ToList().ForEach(keyAndProxy =>
+                    //proxyDictionaryCopy.ToList().ForEach(keyAndProxy =>
+                    //{
+                    //    try
+                    //    {
+                    //        Console.WriteLine(ProxyDictionary[keyAndProxy.Key].CheckState());
+                    //    }
+                    //    catch (Exception)
+                    //    {
+                    //        // Set failed container "IsOnline" status to false immediately
+                    //        RoleEnvironment.RoleInstances[keyAndProxy.Key].IsOnline = false;
+                    //        //if (RoleEnvironment.RoleInstances.ToList().FindAll(x => x.Value.IsOnline == true).Count > 0)
+                    //        if(RoleEnvironment.RoleInstances.ToList().FindAll(x => x.Value.CurrentlyExecutingAssemblyName == null).Count > 0)
+                    //        {
+                    //            HandleIfThereAreFreeContainers(keyAndProxy);
+                    //        }
+                    //        else
+                    //        {
+                    //            HandleIFNoFreeContainers(keyAndProxy);
+                    //        }
+                    //    }
+
+                    //});
+                    foreach (var keyAndProxy in proxyDictionaryCopy)
                     {
                         try
                         {
@@ -383,8 +408,19 @@ namespace CloudCompute
                         {
                             // Set failed container "IsOnline" status to false immediately
                             RoleEnvironment.RoleInstances[keyAndProxy.Key].IsOnline = false;
+                            RoleEnvironment.RoleInstances[keyAndProxy.Key].CurrentlyExecutingAssemblyName = null;
                             //if (RoleEnvironment.RoleInstances.ToList().FindAll(x => x.Value.IsOnline == true).Count > 0)
-                            if(RoleEnvironment.RoleInstances.ToList().FindAll(x => x.Value.CurrentlyExecutingAssemblyName == null).Count > 0)
+                            if (RoleEnvironment.RoleInstances.ToList().FindAll(x =>
+                            {
+                                if (x.Key != keyAndProxy.Key)
+                                {
+                                    return x.Value.CurrentlyExecutingAssemblyName == null;
+                                }
+                                else
+                                {
+                                    return false;
+                                }
+                            }).Count > 0)
                             {
                                 HandleIfThereAreFreeContainers(keyAndProxy);
                             }
@@ -393,28 +429,7 @@ namespace CloudCompute
                                 HandleIFNoFreeContainers(keyAndProxy);
                             }
                         }
-
-                    });
-                    //foreach (var keyAndProxy in proxyDictionaryCopy)
-                    //{
-                    //    try
-                    //    {
-                    //        Console.WriteLine(ProxyDictionary[keyAndProxy.Key].CheckState());                            
-                    //    }
-                    //    catch (Exception)
-                    //    {
-                    //        // Set failed container "IsOnline" status to false immediately
-                    //        RoleEnvironment.RoleInstances[keyAndProxy.Key].IsOnline = false;
-                    //        if(RoleEnvironment.RoleInstances.ToList().FindAll(x => x.Value.IsOnline == true).Count > 0)
-                    //        {
-                    //            HandleIfThereAreFreeContainers(keyAndProxy);
-                    //        }
-                    //        else
-                    //        {
-                    //            HandleIFNoFreeContainers(keyAndProxy);
-                    //        }
-                    //    }
-                    //}
+                    }
                     proxyDictionaryCopy.Clear();
                     Thread.Sleep(3000);
                 }
@@ -467,78 +482,92 @@ namespace CloudCompute
 
             if (RoleEnvironment.RoleInstances.ToList().FindAll(x => x.Value.CurrentlyExecutingAssemblyName == null).Count > 1)
             {
-                if (RoleEnvironment.RoleInstances[StartingContainerIdx]
-                        .CurrentlyExecutingAssemblyName == null)
+                if (StartingContainerIdx != keyAndProxy.Key && RoleEnvironment.RoleInstances[StartingContainerIdx]
+                        .CurrentlyExecutingAssemblyName == null && RoleEnvironment.RoleInstances[StartingContainerIdx].LastExecutingAssemblyName == null)
                 {
                     containerDllStatusId = RoleEnvironment.RoleInstances.ToList().First(x => x.Key == StartingContainerIdx).Key;
                 }
                 else
                 {
                     var rightContainerId = RoleEnvironment.RoleInstances.ToList()
-                        .Find(x => x.Value.CurrentlyExecutingAssemblyName == null);
-                    containerDllStatusId = RoleEnvironment.RoleInstances.ToList().First(x => x.Key == rightContainerId.Value.Id).Key;
+                        .Find(x =>
+                        {
+                            if (x.Key != keyAndProxy.Key && RoleEnvironment.RoleInstances[x.Key].LastExecutingAssemblyName == null)
+                            {
+                                return x.Value.CurrentlyExecutingAssemblyName == null;
+                            }
+                            else
+                            {
+                                return false;
+                            }
+                        });
+                    containerDllStatusId = rightContainerId.Key;
                 }
             }
             else
             {
                 var rightContainerId = RoleEnvironment.RoleInstances.ToList()
                     .Find(x => x.Value.CurrentlyExecutingAssemblyName == null);
-                containerDllStatusId = RoleEnvironment.RoleInstances.ToList().First(x => x.Key == rightContainerId.Value.Id).Key;
+                containerDllStatusId = rightContainerId.Key;
             }
 
             int failedContainerId = keyAndProxy.Key;
-            // Failed instance now has no currently executing assemblies
-            RoleEnvironment.RoleInstances[failedContainerId].CurrentlyExecutingAssemblyName = null;
             int freeContainerId = containerDllStatusId;
-            string lastExecutedDll = RoleEnvironment.RoleInstances[failedContainerId].LastExecutingAssemblyName;
-            string dllToExecute = lastExecutedDll.Replace($"Folder{failedContainerId}", $"Folder{freeContainerId}");
 
-            if (!String.IsNullOrWhiteSpace(dllToExecute))
+            if (freeContainerId != failedContainerId)
             {
-                try
-                {
-                    Task t = Task.Run(() =>
-                    {
-                        // This task will run in the background
-                        Task<string> tt = new Task<string>(() =>
-                        {
-                            try
-                            {
-                                RoleEnvironment.RoleInstances[freeContainerId].CurrentlyExecutingAssemblyName = dllToExecute;
-                                DllParser.CopyDllToContainerFolder(lastExecutedDll, dllToExecute);
-                                return ProxyDictionary[freeContainerId].Load(dllToExecute);
-                            }
-                            catch (Exception)
-                            {
-                                RoleEnvironment.RoleInstances[freeContainerId].LastExecutingAssemblyName = dllToExecute;
-                                RoleEnvironment.RoleInstances[freeContainerId].CurrentlyExecutingAssemblyName = null;
-                                RoleEnvironment.RoleInstances[freeContainerId].IsOnline = false;
-                                return null;
-                            }
-                        });
-                        tt.Start();
+                string lastExecutedDll = RoleEnvironment.RoleInstances[failedContainerId].LastExecutingAssemblyName;
+                string dllToExecute = lastExecutedDll.Replace($"Folder{failedContainerId}", $"Folder{freeContainerId}");
 
-                        // And the outer task will be blocked until "t" is finished
-                        // Thread will be blocked until there is a "Result" returned
-                        string result = tt.Result;
-                        Console.WriteLine($"\t\t{result}");
-                        if (String.IsNullOrWhiteSpace(result))
-                        {
-                            RoleEnvironment.RoleInstances[freeContainerId].CurrentlyExecutingAssemblyName = null;
-                        }
-                        else
-                        {
-                        }                   
-                        RoleEnvironment.RoleInstances[freeContainerId].LastExecutingAssemblyName = dllToExecute;
-                    });
-                }
-                catch (Exception)
+                if (!String.IsNullOrWhiteSpace(dllToExecute))
                 {
-                    RoleEnvironment.RoleInstances[freeContainerId].LastExecutingAssemblyName = dllToExecute;
-                    RoleEnvironment.RoleInstances[freeContainerId].CurrentlyExecutingAssemblyName = null;
-                    RoleEnvironment.RoleInstances[freeContainerId].IsOnline = false;
+                    try
+                    {
+                        Task t = Task.Run(() =>
+                        {
+                            // This task will run in the background
+                            Task<string> tt = new Task<string>(() =>
+                            {
+                                try
+                                {
+                                    RoleEnvironment.RoleInstances[freeContainerId].CurrentlyExecutingAssemblyName = dllToExecute;
+                                    DllParser.CopyDllToContainerFolder(lastExecutedDll, dllToExecute);
+                                    return ProxyDictionary[freeContainerId].Load(dllToExecute);
+                                }
+                                catch (Exception)
+                                {
+                                    RoleEnvironment.RoleInstances[freeContainerId].LastExecutingAssemblyName = dllToExecute;
+                                    RoleEnvironment.RoleInstances[freeContainerId].CurrentlyExecutingAssemblyName = null;
+                                    RoleEnvironment.RoleInstances[freeContainerId].IsOnline = false;
+                                    return null;
+                                }
+                            });
+                            tt.Start();
+
+                            // And the outer task will be blocked until "t" is finished
+                            // Thread will be blocked until there is a "Result" returned
+                            string result = tt.Result;
+                            Console.WriteLine($"\t\t{result}");
+                            if (String.IsNullOrWhiteSpace(result))
+                            {
+                                RoleEnvironment.RoleInstances[freeContainerId].CurrentlyExecutingAssemblyName = null;
+                            }
+                            else
+                            {
+                            }
+                            RoleEnvironment.RoleInstances[freeContainerId].LastExecutingAssemblyName = dllToExecute;
+                            RoleEnvironment.RoleInstances[freeContainerId].CurrentlyExecutingAssemblyName = null; //
+                        });
+                    }
+                    catch (Exception)
+                    {
+                        RoleEnvironment.RoleInstances[freeContainerId].LastExecutingAssemblyName = dllToExecute;
+                        RoleEnvironment.RoleInstances[freeContainerId].CurrentlyExecutingAssemblyName = null;
+                        RoleEnvironment.RoleInstances[freeContainerId].IsOnline = false;
+                    }
                 }
             }
+            
 
             // Place a new container on the failed container's spot, no last dll
             ContainerData newContainer = CreateNewContainerFromFailedNoLastDll(failedContainerId);
@@ -612,6 +641,7 @@ namespace CloudCompute
                         {
                         }                   
                         RoleEnvironment.RoleInstances[newContainer.Id].LastExecutingAssemblyName = dllToExecute;
+                        RoleEnvironment.RoleInstances[newContainer.Id].CurrentlyExecutingAssemblyName = null;
                     });
                 }
                 catch (Exception)
