@@ -21,6 +21,21 @@ namespace CloudCompute
                 int cnt = 0;
                 int i = startingContainerIdx;
 
+                DirectoryInfo containerDirectoryInfo = new DirectoryInfo($"{containersPartialDirectoryPath}{i}");
+                if (containerDirectoryInfo.GetFiles().ToArray().Length > 0)
+                {
+                    foreach (var f in containerDirectoryInfo.GetFiles().ToArray())
+                    {
+                        //if (f.Name != "Dll.dll" && f.Name != "RoleEnvironmentDll.dll")
+                        //{
+                            if (File.Exists(f.FullName))
+                            {
+                                File.Delete(f.FullName);
+                            }                            
+                        //}
+                    }
+                }
+
                 while (cnt < numOfContainers)
                 {
                     foreach (FileInfo dll in allDlls)
@@ -73,9 +88,34 @@ namespace CloudCompute
         
         public void CopyDllToContainerFolder(string source, string destination)
         {
-            if (!File.Exists(source))
+            if (File.Exists(source))
             {
                 File.Copy(source, destination);
+            }
+        }
+
+        public void CopyAllDllsToNewContainerFolder(string source, string destination)
+        {
+            DirectoryInfo destinationDirectory = new DirectoryInfo(Path.GetDirectoryName(destination));
+            if (destinationDirectory.GetFiles().ToArray().Length > 0)
+            {
+                foreach (var f in destinationDirectory.GetFiles().ToArray())
+                {
+                    //if (f.Name != "Dll.dll" && f.Name != "RoleEnvironmentDll.dll")
+                    //{
+                        if (File.Exists(f.FullName))
+                        {
+                            File.Delete(f.FullName);
+                        }
+                    //}
+                }
+            }
+
+            DirectoryInfo sourceDirectory = new DirectoryInfo(Path.GetDirectoryName(source));
+            FileInfo[] sourceFileNames = sourceDirectory.GetFiles("*.dll").ToArray();
+            foreach (var f in sourceFileNames)
+            {
+                File.Copy(f.FullName, Path.Combine(destinationDirectory.FullName, f.Name), true);
             }
         }
     }
