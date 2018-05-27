@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IContainer.cs" />
+    <Compile Include="IPurchase.cs" />
     <Compile Include="IRoleEnvironment.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

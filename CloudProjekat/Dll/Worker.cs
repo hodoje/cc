@@ -18,6 +18,7 @@ namespace Dll
         private string _currentDirectory;
         private Assembly _roleEnvironmentDll;
         private Assembly _serviceDll;
+        private Dictionary<string, string> _brotherInstances;
 
         public string ExecutingContainerId { get => _executingContainerId; set => _executingContainerId = value; }
         public string IpAddress { get => _ipAddress; set => _ipAddress = value; }
@@ -25,6 +26,7 @@ namespace Dll
         public Assembly RoleEnvironmentDll { get => _roleEnvironmentDll; set => _roleEnvironmentDll = value; }
         public string CurrentDirectory { get => _currentDirectory; set => _currentDirectory = value; }
         public Assembly ServiceDll { get => _serviceDll; set => _serviceDll = value; }
+        public Dictionary<string, string> BrotherInstances { get => _brotherInstances; set => _brotherInstances = value; }
 
         public void Start(string containerId)
         {
@@ -43,6 +45,7 @@ namespace Dll
             string[] brotherPorts = ReturnBrotherInstancesAddresses(MyAssemblyName, IpAddress);
             foreach (var brotherPort in brotherPorts)
             {
+                BrotherInstances.Add(brotherPort.Split(',')[0], brotherPort.Split(',')[1]);
                 Console.WriteLine(brotherPort);
             }
 

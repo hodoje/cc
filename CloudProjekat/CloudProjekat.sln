@@ -11,13 +11,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp", "ConsoleApp\Co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contract", "Contract\Contract.csproj", "{FC60C982-8EBC-4062-8BF0-673C75E1D6E6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoleEnvironmentDll", "RoleEnvironmentDll\RoleEnvironmentDll.csproj", "{F8CE544E-7DE6-4061-901C-04E5F5006530}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bank", "Bank\Bank.csproj", "{E55B7B29-8A24-46CE-93D1-3E6D1596612F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bookstore", "Bookstore\Bookstore.csproj", "{77906ABF-841C-4A5E-B837-DC6759F0C8D9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransactionCoordinator", "DistributedTransaction\TransactionCoordinator.csproj", "{C416C87C-A50C-4290-927B-BF041722CDA0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TransactionCoordinator", "TransactionCoordinator\TransactionCoordinator.csproj", "{C416C87C-A50C-4290-927B-BF041722CDA0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoleEnvironment", "RoleEnvironment\RoleEnvironment.csproj", "{B8EA572D-454F-4E32-B8B8-B69E35AD1521}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Client\Client.csproj", "{52BFF48F-1380-4B73-B914-559AEFFBCDA8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,10 +43,6 @@ Global
 		{FC60C982-8EBC-4062-8BF0-673C75E1D6E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FC60C982-8EBC-4062-8BF0-673C75E1D6E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FC60C982-8EBC-4062-8BF0-673C75E1D6E6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F8CE544E-7DE6-4061-901C-04E5F5006530}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F8CE544E-7DE6-4061-901C-04E5F5006530}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F8CE544E-7DE6-4061-901C-04E5F5006530}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F8CE544E-7DE6-4061-901C-04E5F5006530}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E55B7B29-8A24-46CE-93D1-3E6D1596612F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E55B7B29-8A24-46CE-93D1-3E6D1596612F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E55B7B29-8A24-46CE-93D1-3E6D1596612F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -57,6 +55,14 @@ Global
 		{C416C87C-A50C-4290-927B-BF041722CDA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C416C87C-A50C-4290-927B-BF041722CDA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C416C87C-A50C-4290-927B-BF041722CDA0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8EA572D-454F-4E32-B8B8-B69E35AD1521}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8EA572D-454F-4E32-B8B8-B69E35AD1521}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8EA572D-454F-4E32-B8B8-B69E35AD1521}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8EA572D-454F-4E32-B8B8-B69E35AD1521}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52BFF48F-1380-4B73-B914-559AEFFBCDA8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52BFF48F-1380-4B73-B914-559AEFFBCDA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52BFF48F-1380-4B73-B914-559AEFFBCDA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52BFF48F-1380-4B73-B914-559AEFFBCDA8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

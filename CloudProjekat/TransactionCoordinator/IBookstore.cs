@@ -5,16 +5,18 @@ using System.ServiceModel;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Contract
+namespace DistributedTransaction
 {
     [ServiceContract]
-    public interface IRoleEnvironment
+    public interface IBookstore : ITransaction
     {
         [OperationContract]
-        string GetAddress(string myAssemblyName, string containerId);
+        void ListAvailableItems();
+
         [OperationContract]
-        string[] BrotherInstances(string myAssemblyName, string myAddress);
+        void EnlistPurchase(string bookId, int count);
+
         [OperationContract]
-        string GetServiceAddress(string serviceName);
+        double GetItemPrice(string bookId);
     }
 }

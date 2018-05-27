@@ -14,12 +14,16 @@ namespace CloudCompute
     public class RoleEnvironment : IRoleEnvironment
     {
         private static int newClientAppPortStep = 200;
+        private  Dictionary<string, string> _registeredServices;
         private Dictionary<int, ContainerData> _roleInstances;
+
         public Dictionary<int, ContainerData> RoleInstances { get => _roleInstances; set => _roleInstances = value; }
+        public Dictionary<string, string> RegisteredServices { get => _registeredServices; set => _registeredServices = value; }
 
         public RoleEnvironment()
         {
             _roleInstances = new Dictionary<int, ContainerData>();
+            _registeredServices = new Dictionary<string, string>();
         }
 
         public string GetAddress(string myAssemblyName, string containerId)
@@ -42,17 +46,26 @@ namespace CloudCompute
                     ContainerData rightContainer = containers.Find(x => x.Id == id);
                     // ovde treba da ide neka nova adresa koja ce biti razlicita od svih ostalih kako bi se na njoj podigao worker servis
                     int clientAppPort = rightContainer.Port + newClientAppPortStep;
-                    return $"{IPAddress.Loopback}:{clientAppPort}";
-                    //return $"{IPAddress.Loopback}:{rightContainer.Port}";
+                    string address = $"{IPAddress.Loopback}:{clientAppPort}";
+                    
+                    if (RegisteredServices.ContainsKey(myAssemblyName))
+                    {
+                        RegisteredServices[myAssemblyName] = address;
+                    }
+                    else
+                    {
+                        RegisteredServices.Add(myAssemblyName, address);
+                    }
+                    return address;
                 }
                 else
                 {
-                    return $"There is no container with id: {id} that is executing {myAssemblyName}.";
+                    return "";
                 }
             }
             else
             {
-                return $"There are no containers that are executing {myAssemblyName}";
+                return "";
             }
         }
 
@@ -74,6 +87,15 @@ namespace CloudCompute
                 }
             }
             return portList.ToArray();
+        }
+
+        public string GetServiceAddress(string serviceName)
+        {
+            if (!String.IsNullOrWhiteSpace(serviceName))
+            {
+                return RegisteredServices.FirstOrDefault(x => x.Key.Contains(serviceName)).Value;
+            }
+            return "";
         }
     }
 }

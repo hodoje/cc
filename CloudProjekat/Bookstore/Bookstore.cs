@@ -53,7 +53,10 @@ namespace Bookstore
 
             if (oldBook != null && newBook != null)
             {
+                Console.WriteLine($"Old book[{oldBook.BookId}] state: {oldBook.Count}");
                 oldBook.Count = newBook.Count;
+                bookstoreRepository.Remove(newBook);
+                Console.WriteLine($"New book[{oldBook.BookId}] state: {oldBook.Count}");
             }
             else
             {

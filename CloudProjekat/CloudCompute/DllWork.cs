@@ -26,13 +26,10 @@ namespace CloudCompute
                 {
                     foreach (var f in containerDirectoryInfo.GetFiles().ToArray())
                     {
-                        //if (f.Name != "Dll.dll" && f.Name != "RoleEnvironmentDll.dll")
-                        //{
-                            if (File.Exists(f.FullName))
-                            {
-                                File.Delete(f.FullName);
-                            }                            
-                        //}
+                        if (File.Exists(f.FullName))
+                        {
+                            File.Delete(f.FullName);
+                        }
                     }
                 }
 
@@ -77,7 +74,7 @@ namespace CloudCompute
             string result = "";
             foreach (FileInfo file in listOfFiles)
             {
-                if (file.Name == "Dll.dll")
+                if (file.Name != "RoleEnvironment.dll" )
                 {
                     result = file.FullName;
                     break;
@@ -101,13 +98,10 @@ namespace CloudCompute
             {
                 foreach (var f in destinationDirectory.GetFiles().ToArray())
                 {
-                    //if (f.Name != "Dll.dll" && f.Name != "RoleEnvironmentDll.dll")
-                    //{
-                        if (File.Exists(f.FullName))
-                        {
-                            File.Delete(f.FullName);
-                        }
-                    //}
+                    if (File.Exists(f.FullName))
+                    {
+                        File.Delete(f.FullName);
+                    }
                 }
             }
 

@@ -11,10 +11,11 @@ namespace Bookstore
     {
         private static ServiceHost serviceHost;
         private static string address;
+        private static Bookstore bookstore;
 
-        public BookstoreServer()
+        public BookstoreServer(Bookstore b)
         {
-            //Start();
+            bookstore = b;
         }
 
         public void Start(string bookstoreAddress)
@@ -22,6 +23,10 @@ namespace Bookstore
             address = bookstoreAddress;
             Task t = new Task(() =>
             {
+                serviceHost = new ServiceHost(bookstore);
+                var behaviour = serviceHost.Description.Behaviors.Find<ServiceBehaviorAttribute>();
+                behaviour.InstanceContextMode = InstanceContextMode.Single;
+
                 var binding = new NetTcpBinding();
                 var endpoint = $"net.tcp://localhost:{bookstoreAddress.Split(':')[1]}/Bookstore";
                 serviceHost = new ServiceHost(typeof(Bookstore));
@@ -29,6 +34,7 @@ namespace Bookstore
                 serviceHost.Open();
             });
             t.Start();
+            Console.WriteLine("Bookstore server started.");
         }
 
         public void Stop()

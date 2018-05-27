@@ -11,10 +11,11 @@ namespace Bank
     {
         private static ServiceHost serviceHost;
         private static string address;
+        private static Bank bank;
 
-        public BankServer()
+        public BankServer(Bank b)
         {
-            //Start();
+            bank = b;
         }
 
         public void Start(string bankAddress)
@@ -22,6 +23,10 @@ namespace Bank
             address = bankAddress;
             Task t = new Task(() =>
             {
+                serviceHost = new ServiceHost(bank);
+                var behaviour = serviceHost.Description.Behaviors.Find<ServiceBehaviorAttribute>();
+                behaviour.InstanceContextMode = InstanceContextMode.Single;
+
                 var binding = new NetTcpBinding();
                 var endpoint = $"net.tcp://localhost:{bankAddress.Split(':')[1]}/Bank";
                 serviceHost = new ServiceHost(typeof(Bank));
@@ -29,6 +34,7 @@ namespace Bank
                 serviceHost.Open();
             });
             t.Start();
+            Console.WriteLine("Bank server started.");
         }
 
         public void Stop()

@@ -71,15 +71,6 @@ namespace ConsoleApp
 
                                 mi.Invoke(obj, new object[1] { $"{Id}" });
                                 result = "Dll executed successfully.";
-                                Task tt = Task.Run(() =>
-                                {
-                                    for (int i = 0; i < 10; i++)
-                                    {
-                                        Console.WriteLine($"Start{i}");
-                                        Thread.Sleep(2000);
-                                    }
-                                    Console.WriteLine("Finished.");
-                                });
                             }
                         }
                         else

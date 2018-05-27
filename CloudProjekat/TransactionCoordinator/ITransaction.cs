@@ -5,16 +5,16 @@ using System.ServiceModel;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Contract
+namespace DistributedTransaction
 {
     [ServiceContract]
-    public interface IRoleEnvironment
+    public interface ITransaction
     {
         [OperationContract]
-        string GetAddress(string myAssemblyName, string containerId);
+        bool Prepare();
         [OperationContract]
-        string[] BrotherInstances(string myAssemblyName, string myAddress);
+        void Commit();
         [OperationContract]
-        string GetServiceAddress(string serviceName);
+        void Rollback();
     }
 }

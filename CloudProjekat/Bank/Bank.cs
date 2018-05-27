@@ -10,8 +10,8 @@ namespace Bank
     {
         private static List<Client> bankRepository = new List<Client>
         {
-            new Client(){Amount = 500, UserId = "User1" },
-            new Client(){Amount = 600, UserId = "User2" }
+            new Client(){Amount = 500, UserId = "user1" },
+            new Client(){Amount = 600, UserId = "user2" }
         };
 
         private static string userToBuyId;
@@ -52,7 +52,10 @@ namespace Bank
 
             if (oldClient != null && newClient != null)
             {
+                Console.WriteLine($"Old client[{oldClient.UserId}] amount state: {oldClient.Amount}");
                 oldClient.Amount = newClient.Amount;
+                bankRepository.Remove(newClient);
+                Console.WriteLine($"New client[{oldClient.UserId}] amount state: {oldClient.Amount}");
             }
             else
             {
